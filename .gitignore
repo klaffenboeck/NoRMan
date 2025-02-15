@@ -1,3 +1,18 @@
+.python-version
+venv/
+.env/bre
+.DS_Store
+
+# Ignore the actual Notion config file (contains sensitive data)
+configs/notion_config.json
+
+# Allow the example config file to be tracked
+!configs/notion_config.json.example
+
+main*.py
+db*.json
+form*.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

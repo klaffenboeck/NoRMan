@@ -1,0 +1,101 @@
+{
+    "papers_path": "~/Documents/Papers/",
+    "project_options": [
+        "VISize",
+        "ModelPaper",
+        "RSVP",
+        "STAR",
+        "FastVega"
+    ],
+    "favorites": {
+        "citation_settings": {
+            "style1": "IEEE",
+            "italics1": "LaTeX",
+            "refs1": "cite"
+        }
+    },
+    "type_options": [
+        "Paper",
+        "ShortPaper",
+        "Workshop",
+        "Abstract",
+        "Extended Abstract",
+        "Book",
+        "Dataset",
+        "Other",
+        ""
+    ],
+    "venue_options": [
+        "VIS",
+        "EuroVis",
+        "CHI",
+        "SIGGraph",
+        "TVCG",
+        "UISt",
+        "SIGMOD",
+        "PacificVis",
+        "Beliv",
+        "CGF",
+        "VLDB",
+        "arxiv",
+        ""
+    ],
+    "venue_mapping": [
+        {
+            "regex": "IEEE Transactions on Visualization and Computer Graphics",
+            "venue-mapping": "VIS"
+        },
+        {
+            "regex": "Beyond Time and Errors",
+            "venue-mapping": "Beliv"
+        },
+        {
+            "regex": "CHI Conference",
+            "venue-mapping": "CHI"
+        }
+    ],
+    "favorite_authors_mapping": [
+        {
+            "regex": "Jeffrey Heer",
+            "mapping": "Heer"
+        },
+        {
+            "regex": "Dominik Moritz",
+            "mapping": "Moritz"
+        },
+        {
+            "regex": "Min Chen",
+            "mapping": "ChenM"
+        }
+    ],
+    "special_surnames": [
+        "Chen",
+        "Fu",
+        "He",
+        "Hu",
+        "Kim",
+        "Liu",
+        "Li",
+        "Lee",
+        "Ma",
+        "Qin",
+        "Qu",
+        "Sah",
+        "Shen",
+        "Su",
+        "Suh",
+        "Wang",
+        "Wong",
+        "Xi",
+        "Xie",
+        "Xu",
+        "Yang",
+        "Ye",
+        "Yeung",
+        "Zhao",
+        "Zeng",
+        "Zhang",
+        "Zhou",
+        "Zhu"
+    ]
+}

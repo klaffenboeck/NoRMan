@@ -1,0 +1,33 @@
+{
+  "authorlist_formatting_styles": {
+    "ieee": [
+      ["firstname_abbr", " ", "von_part", " ", "lastname"],
+      { "conjunction": [" and ", ", and "] }
+    ],
+    "mla": [
+      ["fullname"],
+      {
+        "delim": ", ",
+        "conjunction": " and ",
+        "first_author_format": ["lastname", ", ", "firstname"],
+        "cutoff": 4
+      }
+    ]
+  },
+  "journal_formatting_styles": {
+    "APA": {
+      "default": {
+        "reference": "##authors.format_ieee_style## (##year##). ##title##. {{<i>##journal##</i>,}}{{{.}}}",
+        "in-text": "Code here",
+        "default": null
+      }
+    },
+    "IEEE": {
+      "default": {
+        "reference": "##authors.format_ieee_style## (##year##). ##title##. {{<i>##journal##</i>,}}{{{.}}}",
+        "in-text": "code here",
+        "default": null
+      }
+    }
+  }
+}
