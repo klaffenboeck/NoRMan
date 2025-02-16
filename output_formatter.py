@@ -12,6 +12,11 @@ __all__ = [
 
 
 class OutputFormatter(ABC):
+    @classmethod
+    def get_formatter(cls, key):
+        """Retrieves the appropriate formatter from the factory."""
+        return OutputFormatterFactory.get_formatter(key)
+
     def format_author(self, author, *args, **kwargs):
         return author._format(*args, **kwargs)
 
@@ -89,8 +94,12 @@ class OutputFormatterFactory:
         return formatter_cls()
 
 OutputFormatterFactory.register_formatter("plain", PlainFormatter)
+OutputFormatterFactory.register_formatter("Plain", PlainFormatter)
 OutputFormatterFactory.register_formatter("html", HtmlFormatter)
+OutputFormatterFactory.register_formatter("HTML", HtmlFormatter)
 OutputFormatterFactory.register_formatter("html_css", HtmlCssFormatter)
+OutputFormatterFactory.register_formatter("HTML+CSS", HtmlCssFormatter)
 OutputFormatterFactory.register_formatter("latex", LatexFormatter)
+OutputFormatterFactory.register_formatter("LaTeX", LatexFormatter)
 OutputFormatterFactory.register_formatter("markdown", MarkdownFormatter)
 OutputFormatterFactory.register_formatter("--format--", None)
