@@ -982,7 +982,8 @@ class HierarchyWindow(tk.Toplevel):
         cm.link_doi = self.link_doi_entry.get().strip()
         cm.journal = self.journal_var.get()
         cm.venue = self.venue_combo.get() if self.venue_combo.get() else cm.venue
-        cm.authors =
+        # TODO: include authors in update_cm
+        #cm.authors =
         self.cm = cm
         pprint.pprint(self.cm)
 
