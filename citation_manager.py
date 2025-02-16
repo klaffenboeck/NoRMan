@@ -84,8 +84,11 @@ class CitationManager:
         self.style_config_data = ConfigHandler.load_config(self.style_config_path)
 
     def parse_bibtex(self, bibtex):
+        _bibtex_data = bibtexparser.loads(bibtex)
+        if not self.valid_bibtex(_bibtex_data):
+            return None
         self.original_bibtex_file = bibtex
-        self.bibtex_data = bibtexparser.loads(bibtex)
+        self.bibtex_data = _bibtex_data
 
         for entry in self.bibtex_data.entries:
             if "ID" in entry:
@@ -117,6 +120,18 @@ class CitationManager:
         self.set_link_doi()
         self.modified_bibtex_file = bibtexparser.dumps(self.bibtex_data)
         self.bibtex_formatter = BibtexFormatter(self.modified_bibtex_file)
+
+    def valid_bibtex(self, bibtex):
+        print("CALLED valid_bibtex ")
+        if isinstance(bibtex, str):
+            try:
+                bibtex = bibtexparser.loads(bibtex)
+            except Exception:
+                return False  # Invalid BibTeX string
+
+        # Ensure bibtex is a valid parsed object with entries
+        return bool(getattr(bibtex, "entries", []))
+
 
     def set_link_doi(self):
         if self.bibtex_url:
