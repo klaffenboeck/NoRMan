@@ -711,6 +711,7 @@ class HierarchyWindow(tk.Toplevel):
         value = self.link_doi_var.get()
         self.main_app.copy_to_clipboard(value)
 
+    # HACK: parse_bibtex in norman has to be refactored entirely, should be handled by citation manager
     def parse_bibtex(self):
         self.parsed_bibtex += 1
         bibtex = self.bibtex_field.get("1.0", tk.END)
