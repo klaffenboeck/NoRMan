@@ -236,7 +236,6 @@ class CitationManager:
 
     # HACK: select_style_template uses {}, should be changed go **
     def select_style_template(self, **kwargs) -> str:
-        print("CALLED select_style_template with kwargs")
         style = kwargs.get("style", "APA")
         encoding = kwargs.get("encoding", "default")  # Reserved for future use
         bib_type = kwargs.get("bib_type", "default")  # E.g., article, book, inproceedings
