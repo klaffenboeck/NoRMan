@@ -88,8 +88,6 @@ class MainApp(tk.Tk):
         self.windows = {"root": self}
         self.after(100, self.new_child_window)
 
-
-
     def open_window_list_view(self):
         WindowListView(self)
 
@@ -184,6 +182,10 @@ class MainApp(tk.Tk):
         self.clipboard_append(value)
         self.update() # keep the clipboard content after application closes
 
+def main():
+    print("CALLED main()")
+    app = MainApp()
+    app.mainloop()
 
 class WindowListView(tk.Toplevel):
     def __init__(self, main_app):
@@ -1089,5 +1091,6 @@ class HierarchyWindow(tk.Toplevel):
 
 if __name__ == "__main__":
     # Create and run the main application
-    app = MainApp()
-    app.mainloop()
+    # app = MainApp()
+    # app.mainloop()
+    main()
