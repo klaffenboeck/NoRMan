@@ -425,10 +425,14 @@ class HierarchyWindow(tk.Toplevel):
         self.short_title_entry = tk.Entry(self.form_frame, textvariable=self.short_title_var, width=25)
         self.short_title_entry.grid(row=31, column=1, columnspan=2, padx=5, pady=5, sticky="W")
 
+        self.short_title_manual_bool = tk.BooleanVar()
+        self.short_title_manual_checkbox = tk.Checkbutton(self.form_frame, variable=self.short_title_manual_bool)
+        self.short_title_manual_checkbox.grid(row=31, column=3, padx=5, pady=5, sticky="E")
+
         self.short_title_length_var = tk.StringVar()
         self.short_title_length_options = list(map(str, list(range(1,9))))
         self.short_title_length_combo = ttk.Combobox(self.form_frame, values=self.short_title_length_options, width=3)
-        self.short_title_length_combo.grid(row=31, column=3, padx=5, pady=5, sticky="E")
+        self.short_title_length_combo.grid(row=31, column=3, padx=5, pady=5, sticky="W")
 
         self.copy_short_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.main_app.copy_to_clipboard(self.short_title_var.get()))
         self.copy_short_title_btn.grid(row=31, column=5, padx=5, pady=5, sticky="W")
