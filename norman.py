@@ -606,7 +606,7 @@ class HierarchyWindow(tk.Toplevel):
         #pprint.pprint(f"Parent: {type(parent)}")
 
     def get_citation(self):
-        print(self.cm.process_citation({"style":"IEEE"}))
+        print(self.cm.process_citation(style="IEEE"))
         #print("NOT IMPLEMENTED YET")
 
     def inherit_projects(self):

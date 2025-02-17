@@ -234,10 +234,12 @@ class CitationManager:
             print(f"Returning direct attribute: {value}")
             return value
 
-    def select_style_template(self, parameters: dict) -> str:
-        style = parameters.get("style", "APA")
-        encoding = parameters.get("encoding", "default")  # Reserved for future use
-        bib_type = parameters.get("bib_type", "default")  # E.g., article, book, inproceedings
+    # HACK: select_style_template uses {}, should be changed go **
+    def select_style_template(self, **kwargs) -> str:
+        print("CALLED select_style_template with kwargs")
+        style = kwargs.get("style", "APA")
+        encoding = kwargs.get("encoding", "default")  # Reserved for future use
+        bib_type = kwargs.get("bib_type", "default")  # E.g., article, book, inproceedings
 
         style_data = self.style_config_data.get("journal_formatting_styles", {}).get(style, {})
         type_data = style_data.get(bib_type, style_data.get("default", {}))
@@ -245,9 +247,9 @@ class CitationManager:
         template = type_data.get("reference", "")
         return template
 
-    def process_citation(self, parameters: dict):
+    def process_citation(self, **kwargs):
         print("CALLED PROCESS_CITATION")
-        template_str = self.select_style_template(parameters)
+        template_str = self.select_style_template(**kwargs)
 
         def replace_conditionals(text):
             pattern = re.compile(r'\{\{(.*?)((?:##.*?##|\{\{.*?\}\})+)(.*?)\}\}', re.DOTALL)
