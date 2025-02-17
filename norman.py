@@ -845,9 +845,6 @@ class HierarchyWindow(tk.Toplevel):
 
     def update_key_validation(self):
         self.is_waiting = True
-        #self.key_validation.set("waiting for response")
-        #self.key_validation_label.config(text="Waiting for response", foreground="black")
-        #self.waiting_for_response_anim()
         if self.check_key():
             self.is_waiting = False
             self.key_validation.set("is available")
@@ -857,18 +854,6 @@ class HierarchyWindow(tk.Toplevel):
             self.is_waiting = False
             self.key_validation.set("is NOT available!!")
             self.key_validation_label.config(foreground="red")
-
-    def waiting_for_response_anim(self): #not working
-        """Animate the label by adding dots."""
-        self.dots
-        if self.is_waiting:
-            # Update the text with the current number of dots
-            self.dots = (self.dots + 1) % 4
-            self.key_validation.set("Waiting for response" + "." * self.dots)
-            self.key_validation_label.config(foreground="black")
-
-            # Schedule the next animation frame
-            self.after(500, self.waiting_for_response_anim)
 
     def check_key(self):
         title = self.key_entry.get()
