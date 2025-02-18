@@ -864,7 +864,6 @@ class HierarchyWindow(tk.Toplevel):
     def load_key(self):
         title = self.key_entry.get()
         page = self.main_app.notion_api.request_page(title)
-        pprint.pprint(page)
         self.clear_projects()
         for project in page.project:
             self.add_or_remove_project(project)

@@ -247,33 +247,42 @@ for attr in ['fullname', 'firstname', 'lastname', 'von_part', 'suffix']:
 
 
 class AuthorList:
-    def __init__(self, author_string: str, config_path: str = "configs/config.json"):
-        self.original = author_string.strip()
-        self.authors = [Author(name.strip(), config_path) for name in self.original.split(" and ")]
+    def __init__(self, authors=None, config_path="configs/config.json"):
+        """
+        Initialize an AuthorList with a single string, a list of strings, or None.
+
+        :param authors: A string of author names separated by " and ", a list of author names, or None.
+        :param config_path: Path to the configuration file.
+        """
+        if authors is None:
+            self.original = ""
+            self.authors = []
+        elif isinstance(authors, str):
+            self.original = authors.strip()
+            self.authors = [Author(name.strip(), config_path) for name in self.original.split(" and ")]
+        elif isinstance(authors, list):
+            self.original = " and ".join(authors)
+            self.authors = [Author(name.strip(), config_path) for name in authors]
+        else:
+            raise TypeError("authors must be a string, a list of strings, or None")
+
         self._load_formatting_styles("configs/formatting_styles.json")
 
     def _load_formatting_styles(self, path):
+        """Load formatting styles from a JSON file and dynamically attach methods for formatting."""
         with open(path, 'r') as file:
             styles = json.load(file).get("authorlist_formatting_styles", {})
 
         for style_name, (args, kwargs) in styles.items():
             method_name = f"format_{style_name}_style"
 
-            # Capture args and kwargs while adding support for a formatter argument
             def inside_formatter(self, *fmt_args, args=args, kwargs=kwargs, formatter=None, **fmt_kwargs):
                 combined_kwargs = {**kwargs, **fmt_kwargs}
-
-                # If a formatter is provided, merge it into combined_kwargs
                 if formatter:
-                    #combined_kwargs.update(formatter)
                     combined_kwargs['formatter'] = formatter
-
                 return self.format(*args, **combined_kwargs)
 
-            # Bind the method to the class instance
             setattr(self, method_name, MethodType(inside_formatter, self))
-
-
 
     @classmethod
     def from_array(cls, array, config="configs/config.json"):

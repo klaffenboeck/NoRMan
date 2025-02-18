@@ -2,6 +2,7 @@ import requests
 import json
 import pprint
 from authors import *
+from config_handler import ConfigHandler
 
 __all__ = ["NotionPage", "NotionAPI"]
 
@@ -13,6 +14,7 @@ class NotionAPI:
             "Content-Type": "application/json",
             "Notion-Version": "2022-06-28",
         }
+        self.mappings = self.load_mappings()
 
     def _load_config(self, config_path):
         with open(config_path, 'r') as file:
@@ -30,6 +32,22 @@ class NotionAPI:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
         return data.get("results", [])
+
+    def load_mappings(self):
+            """Load field mappings from bibtex_config.json using ConfigHandler."""
+            config = ConfigHandler.load_config("bibtex_config.json")
+
+            mappings = {}
+
+            # Process bibtex_fields and special_fields
+            for field_group in ["bibtex_fields", "special_fields"]:
+                for entry in config.get(field_group, []):
+                    if "notion" in entry and entry["notion"]:
+                        field_name = entry["field"]
+                        notion_key, notion_type = entry["notion"]
+                        mappings[field_name] = (notion_key, notion_type)
+
+            return mappings
 
     def request_page(self, title):
         url = f"https://api.notion.com/v1/databases/{self.DATABASE_ID}/query"
@@ -81,24 +99,25 @@ class NotionAPI:
 # TODO: Move these mappings into config
     def prep_data(self, data):
         retdata = {}
-        mappings = {
-            "key": ("Key", "title"),
-            "papertrail": ("Papertrail", "rich_text"),
-            "bibtex": ("Bibtex", "rich_text"),
-            "year": ("Year", "number"),
-            "title": ("Title", "rich_text"),
-            "project": ("Project_tag", "multi_select"),
-            "abstract": ("Abstract", "rich_text"),
-            "count": ("Citation count", "number"),
-            "type": ("Type", "select"),
-            "notes": ("Notes", "rich_text"),
-            "link_doi": ("Link/DOI", "url"),
-            "journal": ("Journal", "rich_text"),
-            "venue": ("Venue", "multi_select"),
-            "authors": ("Authors", "multi_select"),
-            "short_title": ("Short_title", "rich_text"),
-            "short_title_manual": ("Short_title_manual", "checkbox")
-        }
+        # mappings = {
+        #     "key": ("Key", "title"),
+        #     "papertrail": ("Papertrail", "rich_text"),
+        #     "bibtex": ("Bibtex", "rich_text"),
+        #     "year": ("Year", "number"),
+        #     "title": ("Title", "rich_text"),
+        #     "project": ("Project_tag", "multi_select"),
+        #     "abstract": ("Abstract", "rich_text"),
+        #     "count": ("Citation count", "number"),
+        #     "type": ("Type", "select"),
+        #     "notes": ("Notes", "rich_text"),
+        #     "link_doi": ("Link/DOI", "url"),
+        #     "journal": ("Journal", "rich_text"),
+        #     "venue": ("Venue", "multi_select"),
+        #     "authors": ("Authors", "multi_select"),
+        #     "short_title": ("Short_title", "rich_text"),
+        #     "short_title_manual": ("Short_title_manual", "checkbox")
+        # }
+        mappings = self.mappings
 
         for key, (notion_key, notion_type) in mappings.items():
             if key in data and data[key]:  # Ensure data[key] exists and is not empty
@@ -137,39 +156,56 @@ class NotionPage:
                 self.notion_page_id = self.json_data["results"][0].get("id", {})
             else:
                 self.json_data.get("id", {})
-        #self.notion_page_id = self.json_data["results"][0].get("id", {}) if self.json_data["object"] == "list" else self.json_data.get("id", {})
-        #print(f"Notion Page ID: {self.notion_page_id}")
-# NOTE: Yepp, I really gotta move this code-duplication into config!!
-        self.mappings = {
-            "key": ("Key", "title"),
-            "papertrail": ("Papertrail", "rich_text"),
-            "bibtex": ("Bibtex", "rich_text"),
-            "year": ("Year", "number"),
-            "title": ("Title", "rich_text"),
-            "project": ("Project_tag", "multi_select"),
-            "abstract": ("Abstract", "rich_text"),
-            "count": ("Citation count", "number"),
-            "type": ("Type", "select"),
-            "notes": ("Notes", "rich_text"),
-            "link_doi": ("Link/DOI", "url"),
-            "journal": ("Journal", "rich_text"),
-            "venue": ("Venue", "select"),
-            "authors": ("Authors", "multi_select"),
-            "short_title": ("Short_title", "rich_text"),
-            "short_title_manual": ("Short_title_manual", "checkbox")
-        }
+
+        # self.mappings = {
+        #     "key": ("Key", "title"),
+        #     "papertrail": ("Papertrail", "rich_text"),
+        #     "bibtex": ("Bibtex", "rich_text"),
+        #     "year": ("Year", "number"),
+        #     "title": ("Title", "rich_text"),
+        #     "project": ("Project_tag", "multi_select"),
+        #     "abstract": ("Abstract", "rich_text"),
+        #     "count": ("Citation count", "number"),
+        #     "type": ("Type", "select"),
+        #     "notes": ("Notes", "rich_text"),
+        #     "link_doi": ("Link/DOI", "url"),
+        #     "journal": ("Journal", "rich_text"),
+        #     "venue": ("Venue", "select"),
+        #     "authors": ("Authors", "multi_select"),
+        #     "short_title": ("Short_title", "rich_text"),
+        #     "short_title_manual": ("Short_title_manual", "checkbox")
+        # }
+
+        self.mappings = self.load_mappings()
 
         # Initialize attributes based on mappings
         for key, (notion_key, notion_type) in self.mappings.items():
             if key == "authors":
                 # Apply AuthorList.from_array() for authors
                 raw_authors = self.extract_value(notion_key, notion_type)
-                setattr(self, key, AuthorList.from_array(raw_authors) if raw_authors else None)
+                setattr(self, key, AuthorList(raw_authors))
             else:
                 setattr(self, key, self.extract_value(notion_key, notion_type) if self.json_data else None)
 
             # Dynamically create the _safe method for each key
             setattr(self, f"{key}_safe", self.make_safe_method(key))
+
+
+    def load_mappings(self):
+            """Load field mappings from bibtex_config.json using ConfigHandler."""
+            config = ConfigHandler.load_config("bibtex_config.json")
+
+            mappings = {}
+
+            # Process bibtex_fields and special_fields
+            for field_group in ["bibtex_fields", "special_fields"]:
+                for entry in config.get(field_group, []):
+                    if "notion" in entry and entry["notion"]:
+                        field_name = entry["field"]
+                        notion_key, notion_type = entry["notion"]
+                        mappings[field_name] = (notion_key, notion_type)
+
+            return mappings
 
 
     def extract_value(self, notion_key, notion_type):
