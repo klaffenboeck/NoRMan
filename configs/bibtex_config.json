@@ -1,0 +1,90 @@
+{
+  "bibtex_fields": [
+    {
+      "field": "abstract",
+      "importance": 10,
+      "position": 1,
+      "notion": ["Abstract", "rich_text"]
+    },
+    { "field": "address", "importance": 10, "position": 1 },
+    { "field": "archive_prefix", "importance": 10, "position": 1 },
+    { "field": "author", "importance": 10, "position": 1 },
+    { "field": "booktitle", "importance": 10, "position": 1 },
+    { "field": "day", "importance": 10, "position": 1 },
+    { "field": "doi", "importance": 10, "position": 1 },
+    { "field": "edition", "importance": 10, "position": 1 },
+    { "field": "editor", "importance": 10, "position": 1 },
+    { "field": "eprint", "importance": 10, "position": 1 },
+    { "field": "howpublished", "importance": 10, "position": 1 },
+    { "field": "institution", "importance": 10, "position": 1 },
+    { "field": "isbn", "importance": 10, "position": 1 },
+    { "field": "issn", "importance": 10, "position": 1 },
+    {
+      "field": "journal",
+      "importance": 10,
+      "position": 1,
+      "notion": ["Journal", "rich_text"]
+    },
+    { "field": "keywords", "importance": 10, "position": 1 },
+    { "field": "language", "importance": 10, "position": 1 },
+    { "field": "note", "importance": 10, "position": 1 },
+    { "field": "month", "importance": 10, "position": 1 },
+    { "field": "number", "importance": 10, "position": 1 },
+    { "field": "organization", "importance": 10, "position": 1 },
+    { "field": "pages", "importance": 10, "position": 1 },
+    { "field": "primaryclass", "importance": 10, "position": 1 },
+    { "field": "publisher", "importance": 10, "position": 1 },
+    { "field": "series", "importance": 10, "position": 1 },
+    {
+      "field": "title",
+      "importance": 10,
+      "position": 1,
+      "notion": ["Title", "rich_text"]
+    },
+    { "field": "url", "importance": 10, "position": 1 },
+    { "field": "urldate", "importance": 10, "position": 1 },
+    { "field": "version", "importance": 10, "position": 1 },
+    { "field": "volume", "importance": 10, "position": 1 },
+    {
+      "field": "year",
+      "importance": 10,
+      "position": 1,
+      "notion": ["Year", "number"]
+    }
+  ],
+  "bibtex_types": [
+    "article",
+    "book",
+    "inbook",
+    "inproceedings",
+    "proceedings",
+    "techreport",
+    "phdtehsis",
+    "masterthesis",
+    "unpublished",
+    "manual",
+    "misc",
+    "online",
+    "dataset",
+    "software",
+    "report"
+  ],
+  "special_fields": [
+    { "field": "key", "notion": ["Key", "title"] },
+    { "field": "entrytype", "notion": [] },
+    { "field": "papertrail", "notion": ["Papertrail", "rich_text"] },
+    { "field": "bibtex", "notion": ["Bibtex", "rich_text"] },
+    { "field": "project", "notion": ["Project_tag", "multi_select"] },
+    { "field": "authors", "notion": ["Authors", "multi_select"] },
+    { "field": "count", "notion": ["Citation count", "number"] },
+    { "field": "type", "notion": ["Type", "select"] },
+    { "field": "notes", "notion": ["Notes", "rich_text"] },
+    { "field": "link_doi", "notion": ["Link/DOI", "url"] },
+    { "field": "venue", "notion": ["Venue", "multi_select"] },
+    { "field": "short_title", "notion": ["Short_title", "rich_text"] },
+    {
+      "field": "short_title_manual",
+      "notion": ["Short_title_manual", "checkbox"]
+    }
+  ]
+}
