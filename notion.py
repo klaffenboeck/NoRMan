@@ -184,11 +184,12 @@ class NotionPage:
                 # Apply AuthorList.from_array() for authors
                 raw_authors = self.extract_value(notion_key, notion_type)
                 setattr(self, key, AuthorList(raw_authors))
+                setattr(self, f"_{key}", AuthorList(raw_authors))
             else:
                 setattr(self, key, self.extract_value(notion_key, notion_type) if self.json_data else None)
-
+                setattr(self, f"_{key}", self.extract_value(notion_key, notion_type) if self.json_data else None)
             # Dynamically create the _safe method for each key
-            setattr(self, f"{key}_safe", self.make_safe_method(key))
+            #setattr(self, f"_{key}", self.make_safe_method(key))
 
 
     def load_mappings(self):
@@ -251,12 +252,12 @@ class NotionPage:
         print(f"Warning: Unsupported notion_type '{notion_type}'")
         return None
 
-    def make_safe_method(self, key):
-        """Returns a method that safely retrieves the attribute or an empty string."""
-        def safe_method():
-            value = getattr(self, key, None)  # Get the original value
-            return value if value else ""  # Return empty string if None or empty
-        return safe_method  # Return the function itself
+    # def make_safe_method(self, key):
+    #     """Returns a method that safely retrieves the attribute or an empty string."""
+    #     def safe_method():
+    #         value = getattr(self, key, None)  # Get the original value
+    #         return value if value else ""  # Return empty string if None or empty
+    #     return safe_method  # Return the function itself
 
     def get_value(self, key):
         """
