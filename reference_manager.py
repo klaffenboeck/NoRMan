@@ -2,6 +2,7 @@ import json
 import os
 from config_handler import ConfigHandler
 from data_store_adapter import NotionAdapter
+from bibtex_handler import BibtexHandler
 
 class Reference:
     """Handles references by dynamically creating properties from a JSON config."""
@@ -152,9 +153,26 @@ class ReferenceManager:
         if name == "reference":
             super().__setattr__(name, value)
         elif name == "bibtex":
+            setattr(self.reference, name, BibtexHandler(self.reference, value))
+        elif name == "title":
             setattr(self.reference, name, value)
+            if not self.reference.short_title:
+                self.short_title = self.create_short_title()
+                self.short_title_manual = False
+            elif not self.reference.short_title_manual:
+                self.short_title = self.create_short_title()
+                self.short_title_manual = False
+        elif name == "short_title":
+            setattr(self.reference, name, value)
+            setattr(self.reference, "short_title_manual", True)
         else:
             setattr(self.reference, name, value)
+
+    def create_short_title(self, max_length=30):
+        """Creates a short title truncated after max_length characters with ellipses if needed."""
+        return self.title if len(self.title) <= max_length else self.title[:max_length].rstrip() + "..."
+
+
 
     def __getattr__(self, name):
         """Proxy attribute getting to the reference instance."""
@@ -168,7 +186,6 @@ class ReferenceManager:
         adapter = NotionAdapter()
         try:
             new_reference = adapter.load(self.reference)
-            breakpoint()
             self.reference = new_reference  # Only update if successful
         except ValueError as e:
             print(f"Error loading reference: {e}")

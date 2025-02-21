@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from notion import *
+from bibtex_handler import BibtexHandler
 
 class DataStoreAdapter(ABC):
     """Abstract base class for data store adapters."""
@@ -28,8 +29,8 @@ class NotionAdapter(DataStoreAdapter):
             raise ValueError("Reference key cannot be empty.")
         api = NotionAPI()
         page = api.request_page(reference.key)
+        page.bibtex = BibtexHandler(reference, page.bibtex)
         reference.loaded_reference = page
-        #breakpoint()
         return reference
 
     def save(self, *args, **kwargs):

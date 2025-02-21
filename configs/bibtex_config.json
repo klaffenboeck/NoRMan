@@ -71,7 +71,9 @@
   ],
   "special_fields": [
     { "field": "key", "notion": ["Key", "title"] },
+    { "field": "original_key", "notion": [] },
     { "field": "entrytype", "notion": [] },
+    { "field": "original_entrytype", "notion": [] },
     { "field": "papertrail", "notion": ["Papertrail", "rich_text"] },
     { "field": "bibtex", "notion": ["Bibtex", "rich_text"] },
     { "field": "project", "notion": ["Project_tag", "multi_select"] },
