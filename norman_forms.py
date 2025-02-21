@@ -822,7 +822,7 @@ class HierarchyWindow(tk.Toplevel):
 
     def start_waiting_anim(self):
         self.is_waiting = True
-        self.waiting_for_response_anim()
+        #self.waiting_for_response_anim()
 
     def update_bibtex_key(self):
         bibtex = self.bibtex_field.get("1.0", tk.END)
