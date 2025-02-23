@@ -56,35 +56,8 @@ class Reference:
             self.__dict__[f"_{name}"] = value
         else:
             super().__setattr__(name, value)
+        print(f"Reference.{name} = {value}")
 
-
-
-    # def __getattr__(self, name):
-    #     """Custom getter for dynamically assigned properties with Notion-based fallback values."""
-    #     if "fields" in self.__dict__ and name in self.fields:
-    #         value = self.__dict__.get(f"_{name}", None)
-
-    #         # Load configuration and retrieve notion mappings from both bibtex_fields and special_fields
-    #         bibtex_config = ConfigHandler.load_config(self.BIBTEX_CONFIG_FILE)
-    #         notion_mappings = {
-    #             entry["field"]: entry.get("notion", [])  # Ensure 'notion' is accessed safely
-    #             for field_category in ["bibtex_fields", "special_fields"]
-    #             for entry in bibtex_config.get(field_category, [])
-    #         }
-
-    #         # Determine the appropriate fallback value based on the Notion field type
-    #         if name in notion_mappings and notion_mappings[name]:
-    #             notion_tag = notion_mappings[name]
-    #             notion_type = notion_tag[1] if len(notion_tag) > 1 else None  # Ensure at least one entry exists
-    #             if notion_type == "multi_select":
-    #                 return value if value is not None else []
-    #             elif notion_type == "rich_text":
-    #                 return value if value is not None else ""
-    #             # Extend handling for other Notion data types if needed
-
-    #         return value if value is not None else None  # Explicitly return None for consistency
-
-    #     raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
     def __getattr__(self, name):
         """Custom getter to check loaded_reference before accessing local attributes."""
@@ -139,6 +112,29 @@ class Reference:
             if self._title:
                 self._short_title = self._title[:10] + "..." if len(self._title) > 10 else self._title
 
+    def to_json(self):
+        """Custom JSON serialization with automatic conversion of BibtexHandler to string."""
+
+        def serialize_value(value):
+            """Helper function to convert non-serializable objects."""
+            if value.__class__.__name__ == "BibtexHandler":  # Convert bibtex to string
+                return str(value)
+            elif value.__class__.__name__ == "AuthorList":  # Convert bibtex to string
+                return value.to_array()
+            elif hasattr(value, "__json__"):  # Use custom __json__ method if available
+                return value.__json__()
+            elif isinstance(value, list):  # Recursively handle lists
+                return [serialize_value(v) for v in value]
+            elif isinstance(value, dict):  # Recursively handle dicts
+                return {k: serialize_value(v) for k, v in value.items()}
+            else:
+                return value  # Default case (int, str, None, etc.)
+        return {field: serialize_value(getattr(self, field, None)) for field in self.fields}
+
+    def __json__(self):
+        """Alternative JSON representation method."""
+        return self.to_json()
+
     def __repr__(self):
         return f"Reference({vars(self)})"
 
@@ -165,6 +161,21 @@ class ReferenceManager:
         elif name == "short_title":
             setattr(self.reference, name, value)
             setattr(self.reference, "short_title_manual", True)
+        elif name == "project":
+            current_projects = getattr(self.reference, "project", [])
+            if not isinstance(current_projects, list):
+                current_projects = []
+
+            if isinstance(value, str):
+                if value in current_projects:
+                    current_projects.remove(value)
+                else:
+                    current_projects.append(value)
+                setattr(self.reference, "project", current_projects)
+            elif isinstance(value, list):
+                setattr(self.reference, "project", value)
+            else:
+                raise ValueError("Project attribute must be a string or a list.")
         else:
             setattr(self.reference, name, value)
 
@@ -189,3 +200,7 @@ class ReferenceManager:
             self.reference = new_reference  # Only update if successful
         except ValueError as e:
             print(f"Error loading reference: {e}")
+
+    def save_reference(self):
+        adapter = NotionAdapter()
+        adapter.save(self.reference)
