@@ -31,8 +31,14 @@ class NotionAdapter(DataStoreAdapter):
         page = api.request_page(reference.key)
         page.bibtex = BibtexHandler(reference, page.bibtex)
         reference.loaded_reference = page
+        #breakpoint()
         return reference
 
-    def save(self, *args, **kwargs):
+    def save(self, reference):
         """Dummy save method for NotionAdapter."""
-        print("Saving data to Notion (dummy implementation).")
+        #print("Saving data to Notion (dummy implementation).")
+        api = NotionAPI()
+        if reference.loaded_reference:
+            api.update_page(reference.to_json())
+        else:
+            api.create_page(reference.to_json())
