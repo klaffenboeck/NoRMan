@@ -65,3 +65,23 @@ class ConfigHandler:
         """
         instance = cls(file_name)  # Calls __new__, ensuring caching
         return instance.get_config()
+
+    @classmethod
+    def reload_config(cls, file_name: str = None):
+        """
+        Reloads a specific configuration file or all cached configurations.
+
+        - If `file_name` is provided, only that config file is reloaded.
+        - If `file_name` is None, all cached configurations are reloaded.
+        """
+        if file_name:
+            file_path = cls.get_full_path(file_name)
+            if file_path in cls._instances:
+                cls._instances[file_path].reload()
+                print(f"Reloaded configuration for: {file_path}")
+            else:
+                print(f"No cached configuration found for: {file_path}")
+        else:
+            for instance in cls._instances.values():
+                instance.reload()
+            print("Reloaded all cached configurations.")
