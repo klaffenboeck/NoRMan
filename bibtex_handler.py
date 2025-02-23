@@ -4,7 +4,6 @@ from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bparser import BibTexParser
 from config_handler import ConfigHandler
 from authors import AuthorList
-from main import key
 
 __all__ = ["BibtexHandler"]
 
@@ -40,11 +39,14 @@ class BibtexHandler:
             self.reference.original_key = entry.pop("ID", None)
             self.reference.original_entrytype = entry.pop("ENTRYTYPE", None)
             self.reference.entrytype = self.reference.original_entrytype
-
-            for key, value in entry.items():
+            #breakpoint()
+            for key in list(entry.keys()):  # Copy keys before iterating
+                value = entry[key]
                 setattr(self.reference, key, value)
-                if key in ["abstract","eprint"]:
-                    del entry[key]
+
+                if key in ["abstract", "eprint"]:
+                    del entry[key]  # Now safe because we're iterating over a copy
+
                 if key == "author":
                     self.reference.authors = AuthorList(entry.get("author", None))
 
