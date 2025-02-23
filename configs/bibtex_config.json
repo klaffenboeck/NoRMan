@@ -87,6 +87,7 @@
     {
       "field": "short_title_manual",
       "notion": ["Short_title_manual", "checkbox"]
-    }
+    },
+    { "field": "notion_page_id" }
   ]
 }
