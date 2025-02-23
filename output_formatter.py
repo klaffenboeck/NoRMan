@@ -25,7 +25,7 @@ class OutputFormatter(ABC):
 
     def format_key(self, key, value):
         print(f"called formatter with {key} and {value}")
-        return value
+        return str(value)
 
     def format_final_entry(self, entry, *args, **kwargs):
         return entry
@@ -102,4 +102,5 @@ OutputFormatterFactory.register_formatter("HTML+CSS", HtmlCssFormatter)
 OutputFormatterFactory.register_formatter("latex", LatexFormatter)
 OutputFormatterFactory.register_formatter("LaTeX", LatexFormatter)
 OutputFormatterFactory.register_formatter("markdown", MarkdownFormatter)
+OutputFormatterFactory.register_formatter("Markdown", MarkdownFormatter)
 OutputFormatterFactory.register_formatter("--format--", None)
