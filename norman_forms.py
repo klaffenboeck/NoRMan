@@ -494,6 +494,7 @@ class HierarchyWindow(tk.Toplevel):
         self.type_combo = ttk.Combobox(self.form_frame, values=self.main_app.type_options, width=7)
         self.type_combo.set(self.main_app.type_options[0])
         self.type_combo.grid(row=55, column=3, padx=5, pady=5, sticky="W")
+        self.type_combo.bind("<<ComboboxSelected>>", lambda event: [self.update_reference("type", self.type_combo.get())])
 
         # Add venue label and options
         self.venue_label = ttk.Label(self.form_frame, text="Venue:")
@@ -693,12 +694,7 @@ class HierarchyWindow(tk.Toplevel):
 
     def update_ui(self):
         page = self.refman
-        #self.clear_projects()
-        #for project in page.project:
-            #self.add_or_remove_project(project)
 
-        #self.bibtex_field.delete("1.0", tk.END)
-        #self.bibtex_field.insert("1.0", page.bibtex)
         self.update_textfield(self.bibtex_field, page.bibtex)
         self.update_textfield(self.abstract_field, page.abstract)
         self.update_textfield(self.notes_field, page.notes)
@@ -717,6 +713,7 @@ class HierarchyWindow(tk.Toplevel):
         self.papertrail_var.set(page.papertrail)
         self.projects_var.set("; ".join(self.refman.project))
         self.project_combo.set("")
+        self.type_combo.set(page.type)
         self.set_link_doi()
         self.update_counters()
 
@@ -1006,7 +1003,6 @@ class HierarchyWindow(tk.Toplevel):
     def get_text_field(self, field):
         return field.get("1.0", tk.END).strip()
 
-    # TODO: prepare_data_for_notion -> integrate in CitationManager
     def prepare_data_for_notion(self):
         data = {}
         data["key"] = self.key_entry.get()
@@ -1025,7 +1021,6 @@ class HierarchyWindow(tk.Toplevel):
         data["authors"] = self.cm.authors.get_array()
         return data
 
-    # NOTE: update_cm -> can it be used for prepare_data_for_notion?
     def update_cm(self):
         cm = self.cm
         cm.citation_key = self.key_entry.get()
