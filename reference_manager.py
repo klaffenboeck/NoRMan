@@ -3,6 +3,7 @@ import os
 from config_handler import ConfigHandler
 from data_store_adapter import NotionAdapter
 from bibtex_handler import BibtexHandler
+from citation_printer import CitationPrinter
 
 class Reference:
     """Handles references by dynamically creating properties from a JSON config."""
@@ -148,6 +149,7 @@ class ReferenceManager:
         """Proxy attribute setting to the reference instance."""
         if name == "reference":
             super().__setattr__(name, value)
+            super().__setattr__("citation_printer", CitationPrinter(value))
         elif name == "bibtex":
             setattr(self.reference, name, BibtexHandler(self.reference, value))
         elif name == "title":
@@ -183,7 +185,8 @@ class ReferenceManager:
         """Creates a short title truncated after max_length characters with ellipses if needed."""
         return self.title if len(self.title) <= max_length else self.title[:max_length].rstrip() + "..."
 
-
+    def cite(self, *args, **kwargs):
+        return self.citation_printer.cite(*args, **kwargs)
 
     def __getattr__(self, name):
         """Proxy attribute getting to the reference instance."""

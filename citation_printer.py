@@ -133,3 +133,5 @@ class CitationPrinter:
         processed = replace_variables(processed)
         processed = postprocess(processed)
         return processed
+
+    cite = process_citation
