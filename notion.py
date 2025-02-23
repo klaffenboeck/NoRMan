@@ -59,6 +59,7 @@ class NotionAPI:
         }
         # TODO: Make this call async
         response = requests.post(url, json=payload, headers=self.headers)
+        #breakpoint()
         page = NotionPage(response.json())
         return page
 
@@ -99,24 +100,7 @@ class NotionAPI:
 # TODO: Move these mappings into config
     def prep_data(self, data):
         retdata = {}
-        # mappings = {
-        #     "key": ("Key", "title"),
-        #     "papertrail": ("Papertrail", "rich_text"),
-        #     "bibtex": ("Bibtex", "rich_text"),
-        #     "year": ("Year", "number"),
-        #     "title": ("Title", "rich_text"),
-        #     "project": ("Project_tag", "multi_select"),
-        #     "abstract": ("Abstract", "rich_text"),
-        #     "count": ("Citation count", "number"),
-        #     "type": ("Type", "select"),
-        #     "notes": ("Notes", "rich_text"),
-        #     "link_doi": ("Link/DOI", "url"),
-        #     "journal": ("Journal", "rich_text"),
-        #     "venue": ("Venue", "multi_select"),
-        #     "authors": ("Authors", "multi_select"),
-        #     "short_title": ("Short_title", "rich_text"),
-        #     "short_title_manual": ("Short_title_manual", "checkbox")
-        # }
+
         mappings = self.mappings
 
         for key, (notion_key, notion_type) in mappings.items():
@@ -157,24 +141,6 @@ class NotionPage:
             else:
                 self.json_data.get("id", {})
 
-        # self.mappings = {
-        #     "key": ("Key", "title"),
-        #     "papertrail": ("Papertrail", "rich_text"),
-        #     "bibtex": ("Bibtex", "rich_text"),
-        #     "year": ("Year", "number"),
-        #     "title": ("Title", "rich_text"),
-        #     "project": ("Project_tag", "multi_select"),
-        #     "abstract": ("Abstract", "rich_text"),
-        #     "count": ("Citation count", "number"),
-        #     "type": ("Type", "select"),
-        #     "notes": ("Notes", "rich_text"),
-        #     "link_doi": ("Link/DOI", "url"),
-        #     "journal": ("Journal", "rich_text"),
-        #     "venue": ("Venue", "select"),
-        #     "authors": ("Authors", "multi_select"),
-        #     "short_title": ("Short_title", "rich_text"),
-        #     "short_title_manual": ("Short_title_manual", "checkbox")
-        # }
 
         self.mappings = self.load_mappings()
 

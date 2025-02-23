@@ -204,3 +204,9 @@ class ReferenceManager:
     def save_reference(self):
         adapter = NotionAdapter()
         adapter.save(self.reference)
+
+    def validate_key(self):
+        adapter = NotionAdapter()
+        return adapter.validate_key(self.reference)
+
+    check_key = validate_key
