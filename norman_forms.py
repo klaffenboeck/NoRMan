@@ -14,6 +14,7 @@ from notion import NotionAPI, NotionPage
 from config_editor import ConfigEditor
 from pdf_handler import PdfHandler
 from citation_manager import CitationManager
+from reference_manager import ReferenceManager
 
 
 # Define the main application class
@@ -27,6 +28,7 @@ class MainApp(tk.Tk):
 
         self.config_path = "configs/config.json"
         self.config_data = self.load_config(self.config_path)
+        # NOTE: notion_api has to be remove once changes are finished
         self.notion_api = NotionAPI()
 
         # Create a main container to hold everything
@@ -115,6 +117,7 @@ class MainApp(tk.Tk):
             print(f"Error: Invalid JSON in {file_path}.")
         return {}
 
+    # TODO: config has to be loaded and reloaded through ConfigHandler
     def reload_config(self):
         self.config_data = self.load_config("configs/config.json")
         self.project_options = self.config_data["project_options"]
@@ -249,6 +252,7 @@ class HierarchyWindow(tk.Toplevel):
         self.loaded_from_notion = False
         self.pdf_handler = PdfHandler(main_app.config_data["papers_path"])
         self.cm = CitationManager(main_app.config_path)
+        self.refman = ReferenceManager()
 
         # Bind the destroy event to your custom close logic
         self.protocol("WM_DELETE_WINDOW", self.close_window)
@@ -273,22 +277,22 @@ class HierarchyWindow(tk.Toplevel):
         self.project_label = ttk.Label(self.form_frame, text="Project(s):")
         self.project_label.grid(row=1, column=0, padx=5, pady=5, sticky="E")
         self.project_combo = ttk.Combobox(self.form_frame, values=self.main_app.project_options, width=26)
-        self.project_combo.bind("<<ComboboxSelected>>", lambda event: self.add_or_remove_project())
         #self.project_listbox = tk.Listbox(self.form_frame, selectmode=tk.MULTIPLE, height=1)
-        if isinstance(parent,HierarchyWindow):
-            value = parent.project_combo.get()
-            if value not in self.main_app.project_options:
-                main_app.add_project_option(value)
-                self.project_combo = ttk.Combobox(self.form_frame, values=self.main_app.project_options)
-            self.project_combo.set(value)
+        # if isinstance(parent,HierarchyWindow):
+        #     value = parent.project_combo.get()
+        #     if value not in self.main_app.project_options:
+        #         main_app.add_project_option(value)
+        #         self.project_combo = ttk.Combobox(self.form_frame, values=self.main_app.project_options)
+        #     self.project_combo.set(value)
         #self.project_combo.set("VISize")
         #self.populate_project_listbox()
         self.project_combo.grid(row=1, column=1, columnspan=3, padx=5, pady=5, sticky="W")
+        self.project_combo.bind("<<ComboboxSelected>>", lambda event: [self.update_reference("project",self.project_combo.get())])
 
         self.projects_var = tk.StringVar()
         self.projects_label = ttk.Label(self.form_frame, font=("Arial", 10), textvariable=self.projects_var, background="white")
         self.projects_label.grid(row=1, column=1, columnspan=8, padx=9, pady=10, sticky="W")
-        self.projects_var.set("; ".join(self.projects))
+
 
         # Add papertrail label and entry
         self.papertrail_label = ttk.Label(self.form_frame, text="Papertrail:")
@@ -298,6 +302,7 @@ class HierarchyWindow(tk.Toplevel):
             self.papertrail_var = tk.StringVar(value=parent.key_entry.get())
         self.papertrail_entry = ttk.Entry(self.form_frame, textvariable=self.papertrail_var, width=23)
         self.papertrail_entry.grid(row=1, column=4, columnspan=3, padx=0, pady=5, sticky="W")
+        self.papertrail_entry.bind("<KeyRelease>", lambda event: [self.update_reference("papertrail",self.papertrail_entry.get())])
 
     # Add a horizontal separator
         self.separator = ttk.Separator(self.form_frame, orient="horizontal")
@@ -309,7 +314,8 @@ class HierarchyWindow(tk.Toplevel):
         self.key_var = tk.StringVar()
         self.key_entry = ttk.Entry(self.form_frame, textvariable=self.key_var, width=23)
         self.key_entry.grid(row=5, column=1, columnspan=3, padx=5, pady=5, sticky="W")
-        self.key_entry.bind("<KeyRelease>", lambda event: self.update_tree())
+        #self.key_entry.bind("<KeyRelease>", lambda event: self.update_tree())
+        self.key_entry.bind("<KeyRelease>", lambda event: [self.update_reference("key",self.key_entry.get()), self.update_tree()])
 
         self.validate_key_btn = ttk.Button(self.form_frame, text="Validate", command=self.validate_key, width=7)
         self.validate_key_btn.grid(row=5, column=5, padx=5, pady=5, sticky="W")
@@ -331,8 +337,8 @@ class HierarchyWindow(tk.Toplevel):
         self.bibtex_field.grid(row=20, column=1, columnspan=4, rowspan=7, padx=5, pady=5, sticky="W")
         self.bibtex_chars = tk.StringVar(value="0/2000")
         self.bibtex_chars_label = ttk.Label(self.form_frame, font=("Lucida Console", 5), textvariable=self.bibtex_chars)
-        self.bibtex_chars_label.grid(row=24, column=1, padx=8, pady=8, sticky="SW")
-        self.bibtex_field.bind("<KeyRelease>", lambda event: [self.update_bibtex_chars(), self.update_abstract_chars(), self.update_notes_chars(), self.parse_bibtex(), self.update_tree()])
+        self.bibtex_chars_label.grid(row=24, column=0, padx=8, pady=8, sticky="SE")
+        self.bibtex_field.bind("<KeyRelease>", lambda event: [self.update_reference("bibtex",self.get_fieldtext(self.bibtex_field))])
 
         self.second_bibtex_label = ttk.Label(self.form_frame, text="Bibtex cmds:")
         self.second_bibtex_label.grid(row=20, column=5, padx=5, pady=5, sticky="N")
@@ -374,7 +380,7 @@ class HierarchyWindow(tk.Toplevel):
         self.citation_style2_combo.set("--style--")
 
 
-        self.journal_styling_options = ["--format--","Plain","HTML", "LaTeX", "RichText"]
+        self.journal_styling_options = ["--format--","Plain","HTML", "LaTeX", "Html+CSS", "Markdown"]
         self.journal_styling1_combo = ttk.Combobox(self.form_frame, values=self.journal_styling_options, width=7)
         self.journal_styling1_combo.grid(row=23, column=6, pady=5, padx=5, sticky="W")
         self.journal_styling1_combo.set("--format--")
@@ -396,6 +402,7 @@ class HierarchyWindow(tk.Toplevel):
         self.year_var = tk.StringVar()
         self.year_entry = ttk.Entry(self.form_frame, textvariable=self.year_var, width=10)
         self.year_entry.grid(row=27, column=3, padx=5, pady=5, sticky="W")
+        self.year_entry.bind("<KeyRelease>", lambda event: self.update_reference("year", str(self.year_var.get())))
 
         # Add citation count label and entry
         self.count_label = ttk.Label(self.form_frame, text="Cite-Count:")
@@ -404,6 +411,7 @@ class HierarchyWindow(tk.Toplevel):
         self.count_var = tk.StringVar()
         self.count_entry = ttk.Entry(self.form_frame, textvariable=self.count_var, validate="key", validatecommand=(validate_number, "%S"), width=10)
         self.count_entry.grid(row=27, column=1, padx=5, pady=5, sticky="W")
+        self.count_entry.bind("<KeyRelease>", lambda event: self.update_reference("count", str(self.count_var.get())))
 
         # add title label and entry
         self.title_label = ttk.Label(self.form_frame, text="Title:")
@@ -411,6 +419,7 @@ class HierarchyWindow(tk.Toplevel):
         self.title_var = tk.StringVar()
         self.title_entry = tk.Entry(self.form_frame, textvariable=self.title_var, width=38)
         self.title_entry.grid(row=30, column=1, columnspan=3, padx=5, pady=5, sticky="W")
+        self.title_entry.bind("<KeyRelease>", lambda event: self.update_reference("title", str(self.title_var.get())))
 
         self.copy_title_btn = ttk.Button(self.form_frame, text="Copy", command=self.copy_title)
         self.copy_title_btn.grid(row=30, column=5, padx=5, pady=0, sticky="W")
@@ -426,9 +435,10 @@ class HierarchyWindow(tk.Toplevel):
         self.short_title_var = tk.StringVar()
         self.short_title_entry = tk.Entry(self.form_frame, textvariable=self.short_title_var, width=25)
         self.short_title_entry.grid(row=31, column=1, columnspan=2, padx=5, pady=5, sticky="W")
+        self.short_title_entry.bind("<KeyRelease>", lambda event: self.update_reference("short_title", str(self.short_title_var.get())))
 
         self.short_title_manual_bool = tk.BooleanVar()
-        self.short_title_manual_checkbox = tk.Checkbutton(self.form_frame, variable=self.short_title_manual_bool)
+        self.short_title_manual_checkbox = tk.Checkbutton(self.form_frame, variable=self.short_title_manual_bool, state="disabled")
         self.short_title_manual_checkbox.grid(row=31, column=3, padx=5, pady=5, sticky="E")
 
         self.short_title_length_var = tk.StringVar()
@@ -445,9 +455,9 @@ class HierarchyWindow(tk.Toplevel):
         self.authors_label = ttk.Label(self.form_frame, text="Authors:", font=("Lucida Grande", 9))
         self.authors_label.grid(row=33, column=0, padx=5, pady=5, sticky="E")
         self.authors_var = tk.StringVar()
-        self.authors_entry = tk.Entry(self.form_frame, textvariable=self.authors_var, width=57, font=("Lucida Grande", 7))
+        self.authors_entry = tk.Entry(self.form_frame, textvariable=self.authors_var, width=57, font=("Lucida Grande", 7), state="readonly")
         self.authors_entry.grid(row=33, column=1, columnspan=3, padx=5, pady=5, ipady=1, sticky="W")
-        self.authors_entry.bind("<KeyRelease>", lambda event: self.parse_authors_entry())
+        #self.authors_entry.bind("<KeyRelease>", lambda event: self.parse_authors_entry())
 
         self.action_options = ["-action-","copy","cite-#1", "cite-#2", "cite-global"]
         self.authors_action_combo = ttk.Combobox(self.form_frame, values=self.action_options, width=7, state="readonly")
@@ -467,8 +477,8 @@ class HierarchyWindow(tk.Toplevel):
         self.abstract_field.grid(row=40, column=1, columnspan=4, padx=5, pady=5, sticky="W")
         self.abstract_chars = tk.StringVar(value="0/2000")
         self.abstract_chars_label = ttk.Label(self.form_frame, font=("Lucida Console", 5), textvariable=self.abstract_chars)
-        self.abstract_chars_label.grid(row=40, column=1, padx=8, pady=8, sticky="SW")
-        self.abstract_field.bind("<KeyRelease>", lambda event: [self.update_abstract_chars()])
+        self.abstract_chars_label.grid(row=40, column=0, padx=8, pady=8, sticky="SE")
+        self.abstract_field.bind("<KeyRelease>", lambda event: [self.update_reference("abstract",self.get_fieldtext(self.abstract_field))])
 
         # add journal label and entry
         self.journal_label = ttk.Label(self.form_frame, text="Journal:")
@@ -476,6 +486,7 @@ class HierarchyWindow(tk.Toplevel):
         self.journal_var = tk.StringVar()
         self.journal_entry = tk.Entry(self.form_frame, textvariable=self.journal_var, width=38)
         self.journal_entry.grid(row=50, column=1, columnspan=3, padx=5, pady=5, sticky="W")
+        self.journal_entry.bind("<KeyRelease>", lambda event: self.update_reference("journal", str(self.journal_var.get())))
 
         # Add pub type label and options
         self.type_label = ttk.Label(self.form_frame, text="Pub-Type:")
@@ -513,13 +524,13 @@ class HierarchyWindow(tk.Toplevel):
         self.notes_field.grid(row=80, column=1, columnspan=4, padx=5, pady=5, sticky="W")
         self.notes_chars = tk.StringVar(value="0/2000")
         self.notes_chars_label = ttk.Label(self.form_frame, font=("Lucida Console", 5), textvariable=self.notes_chars)
-        self.notes_chars_label.grid(row=80, column=1, padx=8, pady=8, sticky="SW")
-        self.notes_field.bind("<KeyRelease>", lambda event: [self.update_notes_chars()])
+        self.notes_chars_label.grid(row=80, column=0, padx=8, pady=8, sticky="SE")
+        self.notes_field.bind("<KeyRelease>", lambda event: [self.update_reference("notes",self.get_fieldtext(self.notes_field))])
 
         send_button_style = ttk.Style()
         send_button_style.configure("Custom.TButton", background="white", bordercolor="red", borderwidth=2)
 
-        self.send_button = ttk.Button(self.form_frame, text="Send to Notion", command=self.send_data_to_notion, style="Custom.TButton",  width=15)
+        self.send_button = ttk.Button(self.form_frame, text="Send to Notion", command=self.refman.save_reference, style="Custom.TButton",  width=15)
         self.send_button.grid(row=80, column=6, columnspan=2, padx=5, pady=5, sticky="SW")
 
         # Add a horizontal separator
@@ -611,15 +622,20 @@ class HierarchyWindow(tk.Toplevel):
         self.main_app.windows[self.name] = self
         #pprint.pprint(f"Parent: {type(parent)}")
 
+    def update_reference(self, key, value):
+        print(f"UPDATE_REFERENCE.{key} = {value}")
+        setattr(self.refman, key, value)
+        self.update_ui()
+
     def get_citation(self):
         print(self.cm.process_citation(style="IEEE"))
         #print("NOT IMPLEMENTED YET")
 
     def inherit_projects(self):
         if isinstance(self.parent,HierarchyWindow):
-            self.projects = self.parent.projects.copy()
-        else:
-            self.projects = []
+            self.refman.project = self.parent.refman.project.copy()
+        # else:
+        #     self.projects = []
 
     def inherit_from_parents(self):
         if isinstance(self.parent,HierarchyWindow):
@@ -637,8 +653,6 @@ class HierarchyWindow(tk.Toplevel):
             self.journal_styling2_combo.set(favs.get("italics2", self.journal_styling2_combo["values"][0]))
             self.referencing1_combo.set(favs.get("refs1", self.referencing1_combo["values"][0]))
             self.referencing2_combo.set(favs.get("refs2", self.referencing2_combo["values"][0]))
-
-
 
     def add_or_remove_project(self, project = ""):
         if not project:
@@ -660,13 +674,73 @@ class HierarchyWindow(tk.Toplevel):
 
     def switch_to_load(self):
         """Switch button to 'Load' mode when modifier key is pressed"""
-        self.validate_key_btn.config(text="Load", command=self.load_key, width=8)
-        self.send_button.config(text="Update in Notion", command=self.update_notion_entry, width=15)
+        self.validate_key_btn.config(text="Load", command=self.load_reference, width=8)
+        #self.send_button.config(text="Update in Notion", command=self.update_notion_entry, width=15)
 
     def switch_to_validate(self):
         """Switch button back to 'Validate' mode when modifier key is released"""
         self.validate_key_btn.config(text="Validate", command=self.validate_key, width=8)
-        self.send_button.config(text="Send to Notion", command=self.send_data_to_notion,  width=15)
+        #self.send_button.config(text="Send to Notion", command=self.send_data_to_notion,  width=15)
+
+    def get_fieldtext(self, field):
+        return field.get("1.0",tk.END)
+
+    get_textfield = get_fieldtext
+
+    def load_reference(self):
+        self.refman.load_reference()
+        self.update_ui()
+
+    def update_ui(self):
+        page = self.refman
+        #self.clear_projects()
+        #for project in page.project:
+            #self.add_or_remove_project(project)
+
+        #self.bibtex_field.delete("1.0", tk.END)
+        #self.bibtex_field.insert("1.0", page.bibtex)
+        self.update_textfield(self.bibtex_field, page.bibtex)
+        self.update_textfield(self.abstract_field, page.abstract)
+        self.update_textfield(self.notes_field, page.notes)
+        self.title_var.set(page.title)
+        self.short_title_var.set(page.short_title)
+        self.short_title_manual_bool.set(self.value_or_default(page.short_title_manual, False))
+        if page.authors:
+            self.authors = page.authors.to_string(" and ")
+            self.authors_var.set(self.authors)
+        self.journal_var.set(page.journal)
+        self.venue_combo.set(page.venue)
+        self.year_var.set(self.value_or_default(page.year, ""))
+        self.count_var.set(self.value_or_default(page.count, ""))# if page.count else self.count_var.set("0")
+        self.pdf_var.set(self.pdf_handler.find_paper_path(page.title))
+        self.link_doi_var.set(page.link_doi)
+        self.papertrail_var.set(page.papertrail)
+        self.projects_var.set("; ".join(self.refman.project))
+        self.project_combo.set("")
+        self.set_link_doi()
+        self.update_counters()
+
+    def update_textfield(self, text_widget, text):
+        cursor_pos = text_widget.index(tk.INSERT)
+
+        # Simulate refreshing (clear and reinsert text)
+        text_widget.delete("1.0", tk.END)
+        text_widget.insert("1.0", text)
+
+        # Restore cursor position
+        text_widget.mark_set(tk.INSERT, cursor_pos)
+        text_widget.see(tk.INSERT)  # Ensure it's visible
+
+    def value_or_default(self, value, default):
+        return value if value else default
+
+    def copy_to_clipboard(self, value):
+        self.main_app.copy_to_clipboard(value)
+
+    def update_counters(self):
+        self.update_bibtex_chars()
+        self.update_abstract_chars()
+        self.update_notes_chars()
 
     def update_bibtex_chars(self):
         count = len(self.bibtex_field.get("1.0", tk.END))
@@ -693,11 +767,6 @@ class HierarchyWindow(tk.Toplevel):
             value = self.bibtex_field.get("1.0", tk.END).strip()
             self.main_app.copy_to_clipboard(value)
 
-    def cite_mla(self, style="plain"):
-        self.main_app.copy_to_clipboard(self.cm.reference_mla_style(style))
-
-    def cite_ieee(self, style="plain"):
-        self.main_app.copy_to_clipboard(self.cm.reference_ieee_style(style))
 
     def copy_title(self):
         value = self.title_var.get()
@@ -717,46 +786,49 @@ class HierarchyWindow(tk.Toplevel):
         value = self.link_doi_var.get()
         self.main_app.copy_to_clipboard(value)
 
-    # HACK: parse_bibtex in norman has to be refactored entirely, should be handled by citation manager
     def parse_bibtex(self):
-        self.parsed_bibtex += 1
-        bibtex = self.bibtex_field.get("1.0", tk.END)
-        self.cm.set_citation_key(self.key_var.get())
-        self.cm.parse_bibtex(bibtex)
-        self.key_var.set(self.cm.get_citation_key())
-        bib_data = bibtexparser.loads(bibtex)
-        for entry in bib_data.entries:
-            pprint.pprint(f"Entry: {entry}")
-            self.year_var.set(entry["year"]) if "year" in entry else None
-            if entry['ID'] and self.key_entry.get():
-                entry['ID'] = self.key_entry.get()
-            if "eprint" in entry:
-                del entry["eprint"]
-            if "abstract" in entry:
-                self.abstract_field.insert("1.0", entry["abstract"])
-                del entry["abstract"]
-            if "url" in entry:
-                self.bibtex_url = entry["url"].strip()
-            if "author" in entry:
-                self.bibtex_authors = entry["author"]
-                #self.parse_bibtex_authors()
-            if "doi" in entry:
-                self.bibtex_doi = entry["doi"].strip()
-            if "title" in entry:
-                self.title_var.set(entry["title"])
-            if "journal" in entry:
-                self.journal_var.set(entry["journal"])
-            elif "booktitle" in entry:
-                self.journal_var.set(entry["booktitle"])
+        self.refman.bibtex = self.bibtex_field.get("1.0", tk.END)
+        self.update_ui()
+    # HACK: parse_bibtex in norman has to be refactored entirely, should be handled by citation manager
+    # def parse_bibtex(self):
+    #     self.parsed_bibtex += 1
+    #     bibtex = self.bibtex_field.get("1.0", tk.END)
+    #     self.cm.set_citation_key(self.key_var.get())
+    #     self.cm.parse_bibtex(bibtex)
+    #     self.key_var.set(self.cm.get_citation_key())
+    #     bib_data = bibtexparser.loads(bibtex)
+    #     for entry in bib_data.entries:
+    #         pprint.pprint(f"Entry: {entry}")
+    #         self.year_var.set(entry["year"]) if "year" in entry else None
+    #         if entry['ID'] and self.key_entry.get():
+    #             entry['ID'] = self.key_entry.get()
+    #         if "eprint" in entry:
+    #             del entry["eprint"]
+    #         if "abstract" in entry:
+    #             self.abstract_field.insert("1.0", entry["abstract"])
+    #             del entry["abstract"]
+    #         if "url" in entry:
+    #             self.bibtex_url = entry["url"].strip()
+    #         if "author" in entry:
+    #             self.bibtex_authors = entry["author"]
+    #             #self.parse_bibtex_authors()
+    #         if "doi" in entry:
+    #             self.bibtex_doi = entry["doi"].strip()
+    #         if "title" in entry:
+    #             self.title_var.set(entry["title"])
+    #         if "journal" in entry:
+    #             self.journal_var.set(entry["journal"])
+    #         elif "booktitle" in entry:
+    #             self.journal_var.set(entry["booktitle"])
 
 
-        self.set_link_doi()
-        self.match_venue()
-        self.authors_var.set(self.cm.authors.get_string(" and ")) #type: ignore
-        #self.bibtex_field.delete("1.0", tk.END)
-        #self.bibtex_field.insert("1.0", bibtexparser.dumps(bib_data))
-        self.format_bibtex()
-        self.update_cm()
+        # self.set_link_doi()
+        # self.match_venue()
+        # self.authors_var.set(self.cm.authors.get_string(" and ")) #type: ignore
+        # #self.bibtex_field.delete("1.0", tk.END)
+        # #self.bibtex_field.insert("1.0", bibtexparser.dumps(bib_data))
+        # self.format_bibtex()
+        # self.update_cm()
 
     def format_bibtex(self):
         cmd = self.bibtex_radio_options.get()
@@ -817,12 +889,8 @@ class HierarchyWindow(tk.Toplevel):
         self.venue_combo.set("")
 
     def validate_key(self):
-        self.start_waiting_anim()
         self.update_key_validation()
 
-    def start_waiting_anim(self):
-        self.is_waiting = True
-        #self.waiting_for_response_anim()
 
     def update_bibtex_key(self):
         bibtex = self.bibtex_field.get("1.0", tk.END)
@@ -861,25 +929,25 @@ class HierarchyWindow(tk.Toplevel):
         title = self.key_entry.get()
         return self.main_app.notion_api.validate_key_availability(title)
 
-    def load_key(self):
-        title = self.key_entry.get()
-        page = self.main_app.notion_api.request_page(title)
-        self.clear_projects()
-        for project in page.project:
-            self.add_or_remove_project(project)
-        self.notion_page_id = page.notion_page_id
-        self.bibtex_field.insert("1.0", page.bibtex_safe())
-        self.title_var.set(page.title_safe())
-        self.authors = page.authors.get_string(", ")
-        self.authors_var.set(self.authors)
-        self.abstract_field.insert("1.0", page.abstract_safe())
-        self.journal_var.set(page.journal_safe())
-        self.venue_combo.set(page.venue_safe())
-        self.year_var.set(page.year_safe())
-        self.count_var.set(page.count_safe())
-        self.pdf_var.set(self.pdf_handler.find_paper_path(title))
-        #pprint.pprint(dir(page))
-        #print(page.bibtex)
+    # def load_key(self):
+    #     title = self.key_entry.get()
+    #     page = self.main_app.notion_api.request_page(title)
+    #     self.clear_projects()
+    #     for project in page.project:
+    #         self.add_or_remove_project(project)
+    #     self.notion_page_id = page.notion_page_id
+    #     self.bibtex_field.insert("1.0", page.bibtex_safe())
+    #     self.title_var.set(page.title_safe())
+    #     self.authors = page.authors.get_string(", ")
+    #     self.authors_var.set(self.authors)
+    #     self.abstract_field.insert("1.0", page.abstract_safe())
+    #     self.journal_var.set(page.journal_safe())
+    #     self.venue_combo.set(page.venue_safe())
+    #     self.year_var.set(page.year_safe())
+    #     self.count_var.set(page.count_safe())
+    #     self.pdf_var.set(self.pdf_handler.find_paper_path(title))
+    #     #pprint.pprint(dir(page))
+    #     #print(page.bibtex)
 
 
         self.loaded_from_notion = True
@@ -1009,28 +1077,30 @@ class HierarchyWindow(tk.Toplevel):
             messagebox.showerror("Error", str(e))
 
     def clear_fields(self):
-        self.sent_to_notion = False
-        self.loaded_from_notion = False
+        self.refman = ReferenceManager()
+        self.update_ui()
+        # self.sent_to_notion = False
+        # self.loaded_from_notion = False
 
-        self.key_entry.delete(0, tk.END)
-        self.title_var.set("")
-        self.title_entry.delete(0, tk.END)
-        self.year_var.set("")
-        self.year_entry.delete(0, tk.END)
-        self.bibtex_field.delete("1.0", tk.END)
-        self.abstract_field.delete("1.0", tk.END)
-        self.pdf_var.set("")
-        self.pdf_entry.delete(0, tk.END)
-        self.notes_field.delete("1.0", tk.END)
-        self.count_var.set("")
-        self.count_entry.delete(0, tk.END)
-        self.authors_var.set("")
-        self.link_doi_var.set("")
-        self.link_doi_entry.delete(0, tk.END)
-        self.sent_flag = False
-        self.venue_combo.set("")
-        self.journal_var.set("")
-        #print(f"sent_flag: {sent_flag}")
+        # self.key_entry.delete(0, tk.END)
+        # self.title_var.set("")
+        # self.title_entry.delete(0, tk.END)
+        # self.year_var.set("")
+        # self.year_entry.delete(0, tk.END)
+        # self.bibtex_field.delete("1.0", tk.END)
+        # self.abstract_field.delete("1.0", tk.END)
+        # self.pdf_var.set("")
+        # self.pdf_entry.delete(0, tk.END)
+        # self.notes_field.delete("1.0", tk.END)
+        # self.count_var.set("")
+        # self.count_entry.delete(0, tk.END)
+        # self.authors_var.set("")
+        # self.link_doi_var.set("")
+        # self.link_doi_entry.delete(0, tk.END)
+        # self.sent_flag = False
+        # self.venue_combo.set("")
+        # self.journal_var.set("")
+        # #print(f"sent_flag: {sent_flag}")
 
     def confirm_with_ok_cancel(self):
         response = messagebox.askokcancel("Confirmation", "Are you sure? You haven't sent it yet...")
