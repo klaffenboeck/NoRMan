@@ -321,13 +321,17 @@ class AuthorList:
             authors.append(author.fullname)
         return authors
 
-    def get_string(self, delim=", "):
+    to_array = get_array
+
+    def get_string(self, delim=" and "):
         try:
             arr = self.get_array()
             return delim.join(arr)
         except Exception as e:  # Catch any exception and handle it
             print(f"Error in get_string: {e}")  # Optional: Log the error
             return ""  # Return an empty string as a fallback
+
+    to_string = get_string
 
     def format(self, *args, **kwargs):
         formatter = kwargs.get('formatter', None)
