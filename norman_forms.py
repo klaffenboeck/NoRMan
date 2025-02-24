@@ -649,10 +649,14 @@ class HierarchyWindow(tk.Toplevel):
         self.bind_all("<KeyRelease-Alt_L>", lambda event:  self.switch_to_validate())
         self.bind_all("<Command-n>", lambda event: self.new_subwindow())  # macOS
         self.bind_all("<Command-N>", lambda event: self.new_siblingwindow())  # macOS
+        self.bind_all("<Command-l>", lambda event: self.load_reference())  # macOS
+        self.bind_all("<Command-s>", lambda event: self.refman.save_reference())  # macOS
 
         # For Windows/Linux (Ctrl instead of Command)
         self.bind_all("<Control-n>", lambda event: self.new_subwindow())
         self.bind_all("<Control-N>", lambda event: self.new_siblingwindow())
+        self.bind_all("<Control-l>", lambda event: self.load_reference())
+        self.bind_all("<Control-s>", lambda event: self.refman.save_reference())
 
         #self.bind("<KeyRelease-Alt_L>", lambda event: self.switch_to_validate)
 
