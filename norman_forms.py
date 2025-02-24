@@ -375,30 +375,64 @@ class HierarchyWindow(tk.Toplevel):
         self.citation_style_number2 = ttk.Label(self.form_frame, text="#2:")
         self.citation_style_number2.grid(row=24, column=5, padx=5, pady=5, sticky="W")
 
-        self.citation_style_options = self.main_app.journal_style_options
-        self.cite_style1_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
-        self.cite_style1_combo.grid(row=23, column=5, pady=5, padx=(30,5), sticky="W")
-        self.cite_style1_combo.set("--style--")
-        self.cite_style2_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
-        self.cite_style2_combo.grid(row=24, column=5, pady=5, padx=(30,5), sticky="W")
-        self.cite_style2_combo.set("--style--")
 
+        self.cite_style1_combo = ttk.Combobox(self.form_frame, values=self.main_app.journal_style_options, width=7)
+        self.cite_style1_combo.grid(row=23, column=5, pady=5, padx=(30, 5), sticky="W")
+        self.cite_style1_combo.set(PreferenceHandler.get("cite_style1", "--style--"))
 
-        self.cite_format_options = ["--format--","Plain","HTML", "LaTeX", "Html+CSS", "Markdown", "RichText"]
-        self.cite_format1_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
+        self.cite_style2_combo = ttk.Combobox(self.form_frame, values=self.main_app.journal_style_options, width=7)
+        self.cite_style2_combo.grid(row=24, column=5, pady=5, padx=(30, 5), sticky="W")
+        self.cite_style2_combo.set(PreferenceHandler.get("cite_style2", "--style--"))
+
+        self.cite_format1_combo = ttk.Combobox(self.form_frame, values=["--format--", "Plain", "HTML", "LaTeX", "Html+CSS", "Markdown", "RichText"], width=7)
         self.cite_format1_combo.grid(row=23, column=6, pady=5, padx=5, sticky="W")
-        self.cite_format1_combo.set("--format--")
-        self.cite_format2_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
-        self.cite_format2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
-        self.cite_format2_combo.set("--format--")
+        self.cite_format1_combo.set(PreferenceHandler.get("cite_format1", "--format--"))
 
-        self.cite_ref_options = ["--refs--","\\cite","doi", "doi+cite","None"]
-        self.cite_ref1_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
+        self.cite_format2_combo = ttk.Combobox(self.form_frame, values=["--format--", "Plain", "HTML", "LaTeX", "Html+CSS", "Markdown", "RichText"], width=7)
+        self.cite_format2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
+        self.cite_format2_combo.set(PreferenceHandler.get("cite_format2", "--format--"))
+
+        self.cite_ref1_combo = ttk.Combobox(self.form_frame, values=["--refs--", "\\cite", "doi", "doi+cite", "None"], width=7)
         self.cite_ref1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
-        self.cite_ref1_combo.set("--refs--")
-        self.cite_ref2_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
+        self.cite_ref1_combo.set(PreferenceHandler.get("cite_ref1", "--refs--"))
+
+        self.cite_ref2_combo = ttk.Combobox(self.form_frame, values=["--refs--", "\\cite", "doi", "doi+cite", "None"], width=7)
         self.cite_ref2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
-        self.cite_ref2_combo.set("--refs--")
+        self.cite_ref2_combo.set(PreferenceHandler.get("cite_ref2", "--refs--"))
+
+        # Bind the Combobox selection events to save preferences
+        self.cite_style1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_style1", self.cite_style1_combo.get()))
+        self.cite_style2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_style2", self.cite_style2_combo.get()))
+        self.cite_format1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_format1", self.cite_format1_combo.get()))
+        self.cite_format2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_format2", self.cite_format2_combo.get()))
+        self.cite_ref1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref1", self.cite_ref1_combo.get()))
+        self.cite_ref2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref2", self.cite_ref2_combo.get()))
+
+
+        # self.citation_style_options = self.main_app.journal_style_options
+        # self.cite_style1_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
+        # self.cite_style1_combo.grid(row=23, column=5, pady=5, padx=(30,5), sticky="W")
+        # self.cite_style1_combo.set("--style--")
+        # self.cite_style2_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
+        # self.cite_style2_combo.grid(row=24, column=5, pady=5, padx=(30,5), sticky="W")
+        # self.cite_style2_combo.set("--style--")
+
+
+        # self.cite_format_options = ["--format--","Plain","HTML", "LaTeX", "Html+CSS", "Markdown", "RichText"]
+        # self.cite_format1_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
+        # self.cite_format1_combo.grid(row=23, column=6, pady=5, padx=5, sticky="W")
+        # self.cite_format1_combo.set("--format--")
+        # self.cite_format2_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
+        # self.cite_format2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
+        # self.cite_format2_combo.set("--format--")
+
+        # self.cite_ref_options = ["--refs--","\\cite","doi", "doi+cite","None"]
+        # self.cite_ref1_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
+        # self.cite_ref1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
+        # self.cite_ref1_combo.set("--refs--")
+        # self.cite_ref2_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
+        # self.cite_ref2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
+        # self.cite_ref2_combo.set("--refs--")
 
         # Add year label and entry
         self.year_label = ttk.Label(self.form_frame, text="Year:")
@@ -636,7 +670,6 @@ class HierarchyWindow(tk.Toplevel):
         #
         #self.bind("<KeyPress>", lambda event: print(f"Pressed: {event.keysym}"))
 
-        self.inherit_from_parents()
         # Add this window to the main app's window reference
         self.main_app.windows[self.name] = self
         #pprint.pprint(f"Parent: {type(parent)}")
@@ -687,23 +720,6 @@ class HierarchyWindow(tk.Toplevel):
             self.refman.project = self.parent.refman.project.copy()
         # else:
         #     self.projects = []
-
-    def inherit_from_parents(self):
-        if isinstance(self.parent,HierarchyWindow):
-            self.cite_style1_combo.set(self.parent.cite_style1_combo.get())
-            self.cite_style2_combo.set(self.parent.cite_style2_combo.get())
-            self.cite_format1_combo.set(self.parent.cite_format1_combo.get())
-            self.cite_format2_combo.set(self.parent.cite_format2_combo.get())
-            self.cite_ref1_combo.set(self.parent.cite_ref1_combo.get())
-            self.cite_ref2_combo.set(self.parent.cite_ref2_combo.get())
-        else:
-            favs = self.main_app.favorite_citation_settings
-            self.cite_style1_combo.set(favs.get("style1", self.cite_style1_combo["values"][0]))
-            self.cite_style2_combo.set(favs.get("style2", self.cite_style2_combo["values"][0]))
-            self.cite_format1_combo.set(favs.get("italics1", self.cite_format1_combo["values"][0]))
-            self.cite_format2_combo.set(favs.get("italics2", self.cite_format2_combo["values"][0]))
-            self.cite_ref1_combo.set(favs.get("refs1", self.cite_ref1_combo["values"][0]))
-            self.cite_ref2_combo.set(favs.get("refs2", self.cite_ref2_combo["values"][0]))
 
     def add_or_remove_project(self, project = ""):
         if not project:
