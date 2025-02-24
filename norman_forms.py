@@ -664,10 +664,10 @@ class HierarchyWindow(tk.Toplevel):
         # self.bind("<KeyRelease-Meta_L>", lambda event: self.switch_to_validate)
         #
         #self.bind("<KeyPress>", lambda event: print(f"Pressed: {event.keysym}"))
+        self.form_frame.after(100, self.key_entry.focus_set)
 
         # Add this window to the main app's window reference
         self.main_app.windows[self.name] = self
-        #pprint.pprint(f"Parent: {type(parent)}")
 
     def update_reference(self, key, value):
         print(f"UPDATE_REFERENCE.{key} = {value}")
