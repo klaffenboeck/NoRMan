@@ -15,6 +15,8 @@ from config_editor import ConfigEditor
 from pdf_handler import PdfHandler
 from citation_manager import CitationManager
 from reference_manager import ReferenceManager
+from multi_clipboard import ClipboardFactory
+from preference_handler import PreferenceHandler
 
 
 # Define the main application class
@@ -84,6 +86,7 @@ class MainApp(tk.Tk):
         self.venue_options = self.config_data["venue_options"]
         self.favorites = self.config_data["favorites"]
         self.favorite_citation_settings = self.favorites["citation_settings"]
+        self.clipboard = ClipboardFactory.get_clipboard()
 
         self.reload_config()
 
@@ -181,9 +184,10 @@ class MainApp(tk.Tk):
         self.after(100, lambda: self.attributes('-topmost', False))  # Reset topmost after a brief moment
 
     def copy_to_clipboard(self, value):
-        self.clipboard_clear()
-        self.clipboard_append(value)
-        self.update() # keep the clipboard content after application closes
+        self.clipboard.copy(value)
+        # self.clipboard_clear()
+        # self.clipboard_append(value)
+        # self.update() # keep the clipboard content after application closes
 
 def main():
     print("CALLED main()")
@@ -245,7 +249,6 @@ class HierarchyWindow(tk.Toplevel):
         self.name = name
         self.subwindow_count = 0
         main_app.total_descendant_count += 1
-        self.inherit_projects()
         self.authors = []
         self.notion_page_id = []
         self.sent_to_notion = False
@@ -253,6 +256,7 @@ class HierarchyWindow(tk.Toplevel):
         self.pdf_handler = PdfHandler(main_app.config_data["papers_path"])
         self.cm = CitationManager(main_app.config_path)
         self.refman = ReferenceManager()
+        self.inherit_projects()
 
         # Bind the destroy event to your custom close logic
         self.protocol("WM_DELETE_WINDOW", self.close_window)
@@ -323,10 +327,10 @@ class HierarchyWindow(tk.Toplevel):
         self.key_validation_label = ttk.Label(self.form_frame, font=("Lucida Console", 8), textvariable=self.key_validation)
         self.key_validation_label.grid(row=5, column=3, padx=5, pady=0, sticky="W")
 
-        self.copy_key_btn = ttk.Button(self.form_frame, text="Copy", command=self.copy_key)
+        self.copy_key_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.key))
         self.copy_key_btn.grid(row=5, column=6, padx=5, pady=0, sticky="W")
 
-        self.copy_keycite_btn = ttk.Button(self.form_frame, text="\\cite", command=self.copy_keycite)
+        self.copy_keycite_btn = ttk.Button(self.form_frame, text="\\cite", command=lambda: self.cc(self.refman.keycite()))
         self.copy_keycite_btn.grid(row=5, column=7, padx=5, pady=0, sticky="W")
 
         # add bibtex label and entry
@@ -343,10 +347,10 @@ class HierarchyWindow(tk.Toplevel):
         self.second_bibtex_label = ttk.Label(self.form_frame, text="Bibtex cmds:")
         self.second_bibtex_label.grid(row=20, column=5, padx=5, pady=5, sticky="N")
 
-        self.parse_bibtex_btn = ttk.Button(self.form_frame, text="Parse", command=self.parse_bibtex, width=5)
+        self.parse_bibtex_btn = ttk.Button(self.form_frame, text="Parse", command=lambda: self.update_reference("bibtex",self.gf(self.bibtex_field)), width=5)
         self.parse_bibtex_btn.grid(row=20, column=6, padx=5, pady=0, sticky="N")
 
-        self.copy_bibtex_btn = ttk.Button(self.form_frame, text="Copy", command=self.copy_bibtex, width=5)
+        self.copy_bibtex_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.bibtex), width=5)
         self.copy_bibtex_btn.grid(row=20, column=7, padx=5, pady=0, sticky="N")
 
         self.bibtex_radio_options = tk.StringVar(value="original")
@@ -372,29 +376,29 @@ class HierarchyWindow(tk.Toplevel):
         self.citation_style_number2.grid(row=24, column=5, padx=5, pady=5, sticky="W")
 
         self.citation_style_options = self.main_app.journal_style_options
-        self.citation_style1_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
-        self.citation_style1_combo.grid(row=23, column=5, pady=5, padx=(30,5), sticky="W")
-        self.citation_style1_combo.set("--style--")
-        self.citation_style2_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
-        self.citation_style2_combo.grid(row=24, column=5, pady=5, padx=(30,5), sticky="W")
-        self.citation_style2_combo.set("--style--")
+        self.cite_style1_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
+        self.cite_style1_combo.grid(row=23, column=5, pady=5, padx=(30,5), sticky="W")
+        self.cite_style1_combo.set("--style--")
+        self.cite_style2_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
+        self.cite_style2_combo.grid(row=24, column=5, pady=5, padx=(30,5), sticky="W")
+        self.cite_style2_combo.set("--style--")
 
 
-        self.journal_styling_options = ["--format--","Plain","HTML", "LaTeX", "Html+CSS", "Markdown"]
-        self.journal_styling1_combo = ttk.Combobox(self.form_frame, values=self.journal_styling_options, width=7)
-        self.journal_styling1_combo.grid(row=23, column=6, pady=5, padx=5, sticky="W")
-        self.journal_styling1_combo.set("--format--")
-        self.journal_styling2_combo = ttk.Combobox(self.form_frame, values=self.journal_styling_options, width=7)
-        self.journal_styling2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
-        self.journal_styling2_combo.set("--format--")
+        self.cite_format_options = ["--format--","Plain","HTML", "LaTeX", "Html+CSS", "Markdown", "RichText"]
+        self.cite_format1_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
+        self.cite_format1_combo.grid(row=23, column=6, pady=5, padx=5, sticky="W")
+        self.cite_format1_combo.set("--format--")
+        self.cite_format2_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
+        self.cite_format2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
+        self.cite_format2_combo.set("--format--")
 
-        self.referencing_options = ["--refs--","\\cite","doi", "doi+cite","None"]
-        self.referencing1_combo = ttk.Combobox(self.form_frame, values=self.referencing_options, width=7)
-        self.referencing1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
-        self.referencing1_combo.set("--refs--")
-        self.referencing2_combo = ttk.Combobox(self.form_frame, values=self.referencing_options, width=7)
-        self.referencing2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
-        self.referencing2_combo.set("--refs--")
+        self.cite_ref_options = ["--refs--","\\cite","doi", "doi+cite","None"]
+        self.cite_ref1_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
+        self.cite_ref1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
+        self.cite_ref1_combo.set("--refs--")
+        self.cite_ref2_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
+        self.cite_ref2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
+        self.cite_ref2_combo.set("--refs--")
 
         # Add year label and entry
         self.year_label = ttk.Label(self.form_frame, text="Year:")
@@ -421,14 +425,18 @@ class HierarchyWindow(tk.Toplevel):
         self.title_entry.grid(row=30, column=1, columnspan=3, padx=5, pady=5, sticky="W")
         self.title_entry.bind("<KeyRelease>", lambda event: self.update_reference("title", str(self.title_var.get())))
 
-        self.copy_title_btn = ttk.Button(self.form_frame, text="Copy", command=self.copy_title)
+        self.copy_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.title))
         self.copy_title_btn.grid(row=30, column=5, padx=5, pady=0, sticky="W")
 
         self.cite_title_btn = ttk.Button(self.form_frame, text="\\cite", command=self.cite_title)
         self.cite_title_btn.grid(row=30, column=6, padx=5, pady=0, sticky="W")
 
-        self.fullcite_title_btn = ttk.Button(self.form_frame, text="\\keycite", command=self.fullcite_title)
-        self.fullcite_title_btn.grid(row=30, column=7, padx=5, pady=0, sticky="W")
+        self.refcite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.refcite1)
+        self.refcite1_button.configure(relief="flat")
+        self.refcite1_button.grid(row=30, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.refcite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.refcite2)
+        self.refcite2_button.configure(relief="flat")
+        self.refcite2_button.grid(row=30, column=7, padx=(40,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
 
         self.short_title_label = ttk.Label(self.form_frame, text="Short title:")
         self.short_title_label.grid(row=31, column=0, padx=5, pady=5, sticky="E")
@@ -446,8 +454,15 @@ class HierarchyWindow(tk.Toplevel):
         self.short_title_length_combo = ttk.Combobox(self.form_frame, values=self.short_title_length_options, width=3)
         self.short_title_length_combo.grid(row=31, column=3, padx=5, pady=5, sticky="W")
 
-        self.copy_short_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.main_app.copy_to_clipboard(self.short_title_var.get()))
+        self.copy_short_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.short_title_var.get()))
         self.copy_short_title_btn.grid(row=31, column=5, padx=5, pady=5, sticky="W")
+
+        self.footcite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.footcite1)
+        self.footcite1_button.configure(relief="flat")
+        self.footcite1_button.grid(row=31, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.footcite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.footcite2)
+        self.footcite2_button.configure(relief="flat")
+        self.footcite2_button.grid(row=31, column=7, padx=(40,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
 
         #small_default_font = tkFont.nametofont("TkDefaultFont")
         #small_default_font.configure(size=8)  # Change default size
@@ -459,16 +474,19 @@ class HierarchyWindow(tk.Toplevel):
         self.authors_entry.grid(row=33, column=1, columnspan=3, padx=5, pady=5, ipady=1, sticky="W")
         #self.authors_entry.bind("<KeyRelease>", lambda event: self.parse_authors_entry())
 
-        self.action_options = ["-action-","copy","cite-#1", "cite-#2", "cite-global"]
-        self.authors_action_combo = ttk.Combobox(self.form_frame, values=self.action_options, width=7, state="readonly")
-        self.authors_action_combo.title = "authors_action"
-        self.authors_action_combo.grid(row=33, column=6, padx=5, pady=5, sticky="W")
-        self.authors_action_combo.set(self.authors_action_combo["values"][0])
-        self.authors_action_combo.bind("<<ComboboxSelected>>", self.how_to_copy)
+        # self.action_options = ["-action-","copy","cite-#1", "cite-#2", "cite-global"]
+        # self.authors_action_combo = ttk.Combobox(self.form_frame, values=self.action_options, width=7, state="readonly")
+        # self.authors_action_combo.title = "authors_action"
+        # self.authors_action_combo.grid(row=33, column=6, padx=5, pady=5, sticky="W")
+        # self.authors_action_combo.set(self.authors_action_combo["values"][0])
+        # #self.authors_action_combo.bind("<<ComboboxSelected>>", self.how_to_copy)
 
-        self.authors_1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.get_citation)
-        self.authors_1_button.configure(relief="flat")
-        self.authors_1_button.grid(row=33, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.incite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.incite1)
+        self.incite1_button.configure(relief="flat")
+        self.incite1_button.grid(row=33, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.incite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.incite2)
+        self.incite2_button.configure(relief="flat")
+        self.incite2_button.grid(row=33, column=7, padx=(40,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
 
         # add abstract label and textfield
         self.abstract_label = ttk.Label(self.form_frame, text="Abstract:")
@@ -526,7 +544,7 @@ class HierarchyWindow(tk.Toplevel):
         self.notes_chars = tk.StringVar(value="0/2000")
         self.notes_chars_label = ttk.Label(self.form_frame, font=("Lucida Console", 5), textvariable=self.notes_chars)
         self.notes_chars_label.grid(row=80, column=0, padx=8, pady=8, sticky="SE")
-        self.notes_field.bind("<KeyRelease>", lambda event: [self.update_reference("notes",self.get_fieldtext(self.notes_field))])
+        self.notes_field.bind("<KeyRelease>", lambda event: [self.update_reference("notes",self.gf(self.notes_field))])
 
         send_button_style = ttk.Style()
         send_button_style.configure("Custom.TButton", background="white", bordercolor="red", borderwidth=2)
@@ -628,9 +646,41 @@ class HierarchyWindow(tk.Toplevel):
         setattr(self.refman, key, value)
         self.update_ui()
 
+    ur = update_reference
+
     def get_citation(self):
         print(self.cm.process_citation(style="IEEE"))
         #print("NOT IMPLEMENTED YET")
+
+    def refcite1(self):
+        self.cite1("reference")
+
+    def footcite1(self):
+        self.cite1("footnote")
+
+    def incite1(self):
+        self.cite1("in-text")
+
+    def refcite2(self):
+         self.cite2("reference")
+
+    def footcite2(self):
+        self.cite2("footnote")
+
+    def incite2(self):
+        self.cite2("in-text")
+
+    def cite1(self, type):
+        style = self.cite_style1_combo.get()
+        format = self.cite_format1_combo.get()
+        ref = self.cite_ref1_combo.get()
+        self.cc(self.refman.cite(style=style, formatter=format, type=type))
+
+    def cite2(self, type):
+        style = self.cite_style2_combo.get()
+        format = self.cite_format2_combo.get()
+        ref = self.cite_ref2_combo.get()
+        self.cc(self.refman.cite(style=style, formatter=format, type=type))
 
     def inherit_projects(self):
         if isinstance(self.parent,HierarchyWindow):
@@ -640,20 +690,20 @@ class HierarchyWindow(tk.Toplevel):
 
     def inherit_from_parents(self):
         if isinstance(self.parent,HierarchyWindow):
-            self.citation_style1_combo.set(self.parent.citation_style1_combo.get())
-            self.citation_style2_combo.set(self.parent.citation_style2_combo.get())
-            self.journal_styling1_combo.set(self.parent.journal_styling1_combo.get())
-            self.journal_styling2_combo.set(self.parent.journal_styling2_combo.get())
-            self.referencing1_combo.set(self.parent.referencing1_combo.get())
-            self.referencing2_combo.set(self.parent.referencing2_combo.get())
+            self.cite_style1_combo.set(self.parent.cite_style1_combo.get())
+            self.cite_style2_combo.set(self.parent.cite_style2_combo.get())
+            self.cite_format1_combo.set(self.parent.cite_format1_combo.get())
+            self.cite_format2_combo.set(self.parent.cite_format2_combo.get())
+            self.cite_ref1_combo.set(self.parent.cite_ref1_combo.get())
+            self.cite_ref2_combo.set(self.parent.cite_ref2_combo.get())
         else:
             favs = self.main_app.favorite_citation_settings
-            self.citation_style1_combo.set(favs.get("style1", self.citation_style1_combo["values"][0]))
-            self.citation_style2_combo.set(favs.get("style2", self.citation_style2_combo["values"][0]))
-            self.journal_styling1_combo.set(favs.get("italics1", self.journal_styling1_combo["values"][0]))
-            self.journal_styling2_combo.set(favs.get("italics2", self.journal_styling2_combo["values"][0]))
-            self.referencing1_combo.set(favs.get("refs1", self.referencing1_combo["values"][0]))
-            self.referencing2_combo.set(favs.get("refs2", self.referencing2_combo["values"][0]))
+            self.cite_style1_combo.set(favs.get("style1", self.cite_style1_combo["values"][0]))
+            self.cite_style2_combo.set(favs.get("style2", self.cite_style2_combo["values"][0]))
+            self.cite_format1_combo.set(favs.get("italics1", self.cite_format1_combo["values"][0]))
+            self.cite_format2_combo.set(favs.get("italics2", self.cite_format2_combo["values"][0]))
+            self.cite_ref1_combo.set(favs.get("refs1", self.cite_ref1_combo["values"][0]))
+            self.cite_ref2_combo.set(favs.get("refs2", self.cite_ref2_combo["values"][0]))
 
     def add_or_remove_project(self, project = ""):
         if not project:
@@ -686,7 +736,7 @@ class HierarchyWindow(tk.Toplevel):
     def get_fieldtext(self, field):
         return field.get("1.0",tk.END)
 
-    get_textfield = get_fieldtext
+    gf = get_textfield = get_fieldtext
 
     def load_reference(self):
         self.refman.load_reference()
@@ -708,12 +758,13 @@ class HierarchyWindow(tk.Toplevel):
         self.venue_combo.set(page.venue)
         self.year_var.set(self.value_or_default(page.year, ""))
         self.count_var.set(self.value_or_default(page.count, ""))# if page.count else self.count_var.set("0")
-        self.pdf_var.set(self.pdf_handler.find_paper_path(page.title))
+        self.pdf_var.set(self.pdf_handler.find_paper_path(page.key))
         self.link_doi_var.set(page.link_doi)
         self.papertrail_var.set(page.papertrail)
         self.projects_var.set("; ".join(self.refman.project))
         self.project_combo.set("")
-        self.type_combo.set(page.type)
+        if page.type:
+            self.type_combo.set(page.type)
         self.set_link_doi()
         self.update_counters()
 
@@ -728,11 +779,15 @@ class HierarchyWindow(tk.Toplevel):
         text_widget.mark_set(tk.INSERT, cursor_pos)
         text_widget.see(tk.INSERT)  # Ensure it's visible
 
+    utf = update_textfield
+
     def value_or_default(self, value, default):
         return value if value else default
 
     def copy_to_clipboard(self, value):
         self.main_app.copy_to_clipboard(value)
+
+    cc = copy_to_clipboard
 
     def update_counters(self):
         self.update_bibtex_chars()
@@ -750,20 +805,6 @@ class HierarchyWindow(tk.Toplevel):
     def update_notes_chars(self):
         count = len(self.notes_field.get("1.0", tk.END))
         self.notes_chars.set(f"{count}/2000")
-
-    def copy_keycite(self):
-        value = self.key_var.get()
-        self.main_app.copy_to_clipboard("\\cite{"+value+"}")
-
-    def copy_key(self):
-        value = self.key_var.get()
-        self.main_app.copy_to_clipboard(value)
-
-
-    def copy_bibtex(self):
-            value = self.bibtex_field.get("1.0", tk.END).strip()
-            self.main_app.copy_to_clipboard(value)
-
 
     def copy_title(self):
         value = self.title_var.get()
@@ -784,60 +825,21 @@ class HierarchyWindow(tk.Toplevel):
         self.main_app.copy_to_clipboard(value)
 
     def parse_bibtex(self):
-        self.refman.bibtex = self.bibtex_field.get("1.0", tk.END)
+        self.refman.bibtex = self.bibtex_field.get("1.0", tk.END).strip()
         self.update_ui()
-    # HACK: parse_bibtex in norman has to be refactored entirely, should be handled by citation manager
-    # def parse_bibtex(self):
-    #     self.parsed_bibtex += 1
-    #     bibtex = self.bibtex_field.get("1.0", tk.END)
-    #     self.cm.set_citation_key(self.key_var.get())
-    #     self.cm.parse_bibtex(bibtex)
-    #     self.key_var.set(self.cm.get_citation_key())
-    #     bib_data = bibtexparser.loads(bibtex)
-    #     for entry in bib_data.entries:
-    #         pprint.pprint(f"Entry: {entry}")
-    #         self.year_var.set(entry["year"]) if "year" in entry else None
-    #         if entry['ID'] and self.key_entry.get():
-    #             entry['ID'] = self.key_entry.get()
-    #         if "eprint" in entry:
-    #             del entry["eprint"]
-    #         if "abstract" in entry:
-    #             self.abstract_field.insert("1.0", entry["abstract"])
-    #             del entry["abstract"]
-    #         if "url" in entry:
-    #             self.bibtex_url = entry["url"].strip()
-    #         if "author" in entry:
-    #             self.bibtex_authors = entry["author"]
-    #             #self.parse_bibtex_authors()
-    #         if "doi" in entry:
-    #             self.bibtex_doi = entry["doi"].strip()
-    #         if "title" in entry:
-    #             self.title_var.set(entry["title"])
-    #         if "journal" in entry:
-    #             self.journal_var.set(entry["journal"])
-    #         elif "booktitle" in entry:
-    #             self.journal_var.set(entry["booktitle"])
 
-
-        # self.set_link_doi()
-        # self.match_venue()
-        # self.authors_var.set(self.cm.authors.get_string(" and ")) #type: ignore
-        # #self.bibtex_field.delete("1.0", tk.END)
-        # #self.bibtex_field.insert("1.0", bibtexparser.dumps(bib_data))
-        # self.format_bibtex()
-        # self.update_cm()
-
+    # TODO: format_bibtex (for radiobuttons) should be implemented in ReferenceManager
     def format_bibtex(self):
-        cmd = self.bibtex_radio_options.get()
-        print(cmd)
-        f = self.cm.bibtex_formatter
-        m = getattr(f, cmd, None)
-        if m:
-            self.bibtex_field.delete("1.0",tk.END)
-            self.bibtex_field.insert("1.0", m())
-        else:
-            raise ValueError(f"Invalid method: {m}")
-
+        pass
+    #     cmd = self.bibtex_radio_options.get()
+    #     print(cmd)
+    #     f = self.cm.bibtex_formatter
+    #     m = getattr(f, cmd, None)
+    #     if m:
+    #         self.bibtex_field.delete("1.0",tk.END)
+    #         self.bibtex_field.insert("1.0", m())
+    #     else:
+    #         raise ValueError(f"Invalid method: {m}")
 
     def set_link_doi(self):
         if self.bibtex_url:
@@ -869,7 +871,6 @@ class HierarchyWindow(tk.Toplevel):
     def set_authors_var(self):
         self.authors_var.set(", ".join(self.authors))
 
-
     def match_venue(self):
         """Matches journal name against venue_mapping regex and sets the venue_combo value."""
         journal_name = self.journal_var.get()
@@ -889,27 +890,6 @@ class HierarchyWindow(tk.Toplevel):
         self.update_key_validation()
 
 
-    def update_bibtex_key(self):
-        bibtex = self.bibtex_field.get("1.0", tk.END)
-        bib_data = bibtexparser.loads(bibtex)
-        for entry in bib_data.entries:
-            if entry['ID']:
-                entry['ID'] = self.key_entry.get()
-
-        self.bibtex_field.delete("1.0", tk.END)
-        self.bibtex_field.insert("1.0", bibtexparser.dumps(bib_data))
-
-    def how_to_copy(self, event):
-        widget = event.widget
-        selected_value = widget.get()
-        widget.set(selected_value)
-        print(f"Combobox: {widget.title}, Selected: {selected_value}")
-        self.main_app.after(1000, lambda: widget.set(widget["values"][0]))
-        #widget.set("")
-        self.focus_set()
-        #widget.set(widget["values"][0])
-        #self.focus_set()
-
     def update_key_validation(self):
         self.is_waiting = True
         if self.check_key():
@@ -925,30 +905,8 @@ class HierarchyWindow(tk.Toplevel):
     def check_key(self):
         title = self.key_entry.get()
         return self.main_app.notion_api.validate_key_availability(title)
-
-    # def load_key(self):
-    #     title = self.key_entry.get()
-    #     page = self.main_app.notion_api.request_page(title)
-    #     self.clear_projects()
-    #     for project in page.project:
-    #         self.add_or_remove_project(project)
-    #     self.notion_page_id = page.notion_page_id
-    #     self.bibtex_field.insert("1.0", page.bibtex_safe())
-    #     self.title_var.set(page.title_safe())
-    #     self.authors = page.authors.get_string(", ")
-    #     self.authors_var.set(self.authors)
-    #     self.abstract_field.insert("1.0", page.abstract_safe())
-    #     self.journal_var.set(page.journal_safe())
-    #     self.venue_combo.set(page.venue_safe())
-    #     self.year_var.set(page.year_safe())
-    #     self.count_var.set(page.count_safe())
-    #     self.pdf_var.set(self.pdf_handler.find_paper_path(title))
-    #     #pprint.pprint(dir(page))
-    #     #print(page.bibtex)
-
-
+        # LEFTOVER: loaded_from_notion in UI should not be necessary anymore.
         self.loaded_from_notion = True
-
 
     def only_numbers(self, char):
         # Return True if the input is a digit or empty (to allow deleting).
@@ -967,30 +925,6 @@ class HierarchyWindow(tk.Toplevel):
         self.title(f"{key} ({self.name})")
 
 
-    def send_data_to_notion(self):
-        if self.sent_to_notion:
-            messagebox.showerror("Error", "You already sent this - please switch to update!")
-            return
-        if self.loaded_from_notion:
-            messagebox.showerror("Error", "Entry was loaded from Notion - please switch to update!")
-            return
-        try:
-            data = self.prepare_data_for_notion()
-            self.main_app.notion_api.create_page(data)
-            self.sent_to_notion = True
-        except ValueError as e:
-            messagebox.showwarning("ValueError", str(e))
-
-    def update_notion_entry(self):
-        if not (self.sent_to_notion or self.loaded_from_notion):
-            messagebox.showerror("Error", "This is probably not gonna work")
-        try:
-            data = self.prepare_data_for_notion()
-            data["notion_page_id"] = self.notion_page_id
-            self.main_app.notion_api.update_page(data)
-        except ValueError as e:
-            messagebox.showwarning("ValueError", str(e))
-
     def get_bibtex_field(self):
         return self.bibtex_field.get("1.0", tk.END).strip()
 
@@ -1002,44 +936,6 @@ class HierarchyWindow(tk.Toplevel):
 
     def get_text_field(self, field):
         return field.get("1.0", tk.END).strip()
-
-    def prepare_data_for_notion(self):
-        data = {}
-        data["key"] = self.key_entry.get()
-        data["bibtex"] = self.bibtex_field.get("1.0", tk.END).strip()
-        data["papertrail"] = self.papertrail_entry.get()
-        data["title"] = self.title_entry.get()
-        data["year"] = int(self.year_entry.get())
-        data["project"] = self.projects
-        data["abstract"] = self.abstract_field.get("1.0", tk.END).strip()
-        data["count"] = self.count_var.get()
-        data["type"] = self.type_combo.get()
-        data["notes"] = self.notes_field.get("1.0", tk.END).strip()
-        data["link_doi"] = self.link_doi_entry.get().strip()
-        data["journal"] = self.journal_var.get()
-        data["venue"] = self.venue_combo.get()
-        data["authors"] = self.cm.authors.get_array()
-        return data
-
-    def update_cm(self):
-        cm = self.cm
-        cm.citation_key = self.key_entry.get()
-        cm.modified_bibtex_file = self.get_text_field(self.bibtex_field)
-        cm.papertrail = self.papertrail_entry.get()
-        cm.title = self.title_entry.get()
-        cm.year = int(self.year_entry.get())
-        cm.projects = self.projects
-        cm.abstract = self.get_text_field(self.abstract_field)
-        cm.count = self.count_var.get()
-        cm.type = self.type_combo.get()
-        cm.notes = self.get_text_field(self.notes_field)
-        cm.link_doi = self.link_doi_entry.get().strip()
-        cm.journal = self.journal_var.get()
-        cm.venue = self.venue_combo.get() if self.venue_combo.get() else cm.venue
-        # TODO: include authors in update_cm
-        #cm.authors =
-        self.cm = cm
-        pprint.pprint(self.cm)
 
 
     def select_pdf_file(self):
@@ -1056,7 +952,7 @@ class HierarchyWindow(tk.Toplevel):
     def rename_and_move_pdf(self):
 
         """Handle UI interaction for renaming/moving PDF."""
-        key_content = self.key_entry.get().strip()
+        key_content = self.refman.key
         try:
             new_path = self.pdf_handler.rename_and_move_pdf(key_content)
             self.pdf_var.set(new_path)
@@ -1074,33 +970,12 @@ class HierarchyWindow(tk.Toplevel):
     def clear_fields(self):
         self.refman = ReferenceManager()
         self.update_ui()
-        # self.sent_to_notion = False
-        # self.loaded_from_notion = False
 
-        # self.key_entry.delete(0, tk.END)
-        # self.title_var.set("")
-        # self.title_entry.delete(0, tk.END)
-        # self.year_var.set("")
-        # self.year_entry.delete(0, tk.END)
-        # self.bibtex_field.delete("1.0", tk.END)
-        # self.abstract_field.delete("1.0", tk.END)
-        # self.pdf_var.set("")
-        # self.pdf_entry.delete(0, tk.END)
-        # self.notes_field.delete("1.0", tk.END)
-        # self.count_var.set("")
-        # self.count_entry.delete(0, tk.END)
-        # self.authors_var.set("")
-        # self.link_doi_var.set("")
-        # self.link_doi_entry.delete(0, tk.END)
-        # self.sent_flag = False
-        # self.venue_combo.set("")
-        # self.journal_var.set("")
-        # #print(f"sent_flag: {sent_flag}")
 
     def confirm_with_ok_cancel(self):
         response = messagebox.askokcancel("Confirmation", "Are you sure? You haven't sent it yet...")
         if response:  # User clicked 'OK'
-            clear_fields()
+            self.clear_fields()
         else:  # User clicked 'Cancel'
             print("User canceled the action.")
 
