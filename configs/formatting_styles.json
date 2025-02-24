@@ -1,8 +1,16 @@
 {
   "authorlist_formatting_styles": {
+    "apa_short": [
+      ["lastname"],
+      { "delim": ", ", "conjunction": " & ", "cutoff": 3 }
+    ],
     "ieee": [
       ["firstname_abbr", " ", "von_part", " ", "lastname"],
       { "conjunction": [" and ", ", and "] }
+    ],
+    "ieee_short": [
+      ["lastname"],
+      { "conjunction": [" and ", ", and "], "cutoff": 4 }
     ],
     "mla": [
       ["fullname"],
@@ -12,20 +20,30 @@
         "first_author_format": ["lastname", ", ", "firstname"],
         "cutoff": 4
       }
+    ],
+    "mla_short": [
+      ["lastname"],
+      {
+        "delim": ", ",
+        "conjunction": " and ",
+        "cutoff": 3
+      }
     ]
   },
   "journal_formatting_styles": {
     "APA": {
       "default": {
-        "reference": "##authors.format_ieee_style## (##year##). ##title##. {{<i>##journal##</i>,}}{{{.}}}",
-        "in-text": "Code here",
+        "reference": "##authors.format_mla_style## (##year##). ##title##. {{<i>##journal##</i>,}}{{{.}}}",
+        "footnote": "##authors.format_apa_short_style##, \"##short_title##\" (##year##). ",
+        "in-text": "(##authors.format_apa_short_style##, ##year##)",
         "default": null
       }
     },
     "IEEE": {
       "default": {
-        "reference": "##authors.format_ieee_style## (##year##). ##title##. {{<i>##journal##</i>,}}{{{.}}}",
-        "in-text": "code here",
+        "reference": "##authors.format_ieee_style##. ##title##. {{<i>##journal##</i>,}} ##year##.",
+        "footnote": "[##authors.format_ieee_short_style##, ##year##]",
+        "in-text": "[##authors.format_ieee_short_style##, ##year##]",
         "default": null
       }
     }
