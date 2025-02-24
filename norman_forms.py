@@ -308,6 +308,9 @@ class HierarchyWindow(tk.Toplevel):
         self.papertrail_entry.grid(row=1, column=4, columnspan=3, padx=0, pady=5, sticky="W")
         self.papertrail_entry.bind("<KeyRelease>", lambda event: [self.update_reference("papertrail",self.papertrail_entry.get())])
 
+        self.copy_papertrail_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.papertrail))
+        self.copy_papertrail_btn.grid(row=1, column=7, padx=5, pady=0, sticky="W")
+
     # Add a horizontal separator
         self.separator = ttk.Separator(self.form_frame, orient="horizontal")
         self.separator.grid(row=3, column=0, columnspan=10, pady=5, sticky="ew")
