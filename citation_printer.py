@@ -29,6 +29,7 @@ class CitationPrinter:
 
     def reload_config(self):
         """Reloads the style configuration from the JSON file."""
+        ConfigHandler.reload_config()
         self.style_config_data = ConfigHandler.load_config(self.style_config_path)
 
 
@@ -62,13 +63,15 @@ class CitationPrinter:
 
     def select_style_template(self, **kwargs) -> str:
         style = kwargs.get("style", "APA")
+        type = kwargs.get("type", "reference")
         encoding = kwargs.get("encoding", "default")  # Reserved for future use
         bib_type = kwargs.get("bib_type", "default")  # E.g., article, book, inproceedings
 
         style_data = self.style_config_data.get("journal_formatting_styles", {}).get(style, {})
         type_data = style_data.get(bib_type, style_data.get("default", {}))
 
-        template = type_data.get("reference", "")
+        template = type_data.get(type, "")
+        #breakpoint()
         return template
 
     def process_citation(self, **kwargs):
@@ -122,7 +125,7 @@ class CitationPrinter:
                 # if text.endswith((')', ']', '>')):
                 #     text = text[:-1] + final_symbol + text[-1]
                 # else:
-                    text += final_symbol
+                text += final_symbol
 
             if self.output_formatter:
                 return self.output_formatter.format_final_entry(text, id=self.reference.key)
