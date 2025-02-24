@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import re
 
 __all__ = [
     "OutputFormatter",
@@ -59,13 +60,77 @@ class HtmlCssFormatter(HtmlFormatter):
             return f"<div id='{id}>{entry}</div>"
         return entry
 
+# class LatexFormatter(OutputFormatter):
+#     def format_author(self, author, *args, **kwargs):
+#         formatted_author = author._format(*args, **kwargs)
+#         return f"{formatted_author}"
+
+#     def format_authors(self, author_list, *args, **kwargs):
+#         return author_list._format(*args, **kwargs)
+
+#     def format_final_entry(self, text, *args, **kwargs):
+#         """
+#         Replaces specific HTML-style formatting tags with LaTeX equivalents.
+#         Fixes escaping issues by properly handling replacement values.
+#         """
+#         replacements = {
+#             r"<i>": r"\\textit{",    # Double escaping ensures LaTeX compatibility
+#             r"</i>": r"}",
+#             r"<b>": r"\\textbf{",
+#             r"</b>": r"}",
+#             r"<u>": r"\\underline{",
+#             r"</u>": r"}"
+#         }
+
+#         # Apply replacements with correct escaping
+#         for html_tag, latex_equiv in replacements.items():
+#             text = re.sub(re.escape(html_tag), latex_equiv, text)  # Escape search patterns, not replacement values
+
+#         return text
+#
+
 class LatexFormatter(OutputFormatter):
     def format_author(self, author, *args, **kwargs):
         formatted_author = author._format(*args, **kwargs)
-        return f"\\textbf{{{formatted_author}}}"
+        return f"{formatted_author}"
 
     def format_authors(self, author_list, *args, **kwargs):
         return author_list._format(*args, **kwargs)
+
+    def format_final_entry(self, text, *args, **kwargs):
+        """
+        Replaces HTML-style formatting tags with LaTeX equivalents
+        and escapes a basic set of special LaTeX characters.
+        """
+        # HTML to LaTeX replacements
+        replacements = {
+            r"<i>": r"\textit{",
+            r"</i>": r"}",
+            r"<b>": r"\textbf{",
+            r"</b>": r"}",
+            r"<u>": r"\underline{",
+            r"</u>": r"}"
+        }
+
+        # Apply replacements for HTML tags first
+        # for special_tag, latex_equiv in replacements.items():
+        #     text = re.sub(re.escape(special_tag), latex_equiv, text)
+
+        # Escape basic LaTeX special characters
+        special_chars = {
+            "&": r"\&",
+            "%": r"\%",
+            "$": r"\$",
+            "#": r"\#",
+            "_": r"\_",
+            "^": r"\^{}"
+        }
+
+        # Replace only if the character is outside LaTeX commands
+        for char, escaped in special_chars.items():
+            text = text.replace(char, escaped)
+
+        return text
 
 
 class MarkdownFormatter(OutputFormatter):
@@ -76,6 +141,55 @@ class MarkdownFormatter(OutputFormatter):
     def format_authors(self, author_list, *args, **kwargs):
         return author_list._format(*args, **kwargs)
 
+    def format_final_entry(self, text, *args, **kwargs):
+        """
+        Converts HTML-style formatting tags to Markdown equivalents.
+        Removes unsupported HTML tags.
+        """
+        replacements = {
+            r"<i>": r"*",       # <i> → *
+            r"</i>": r"*",      # </i> → *
+            r"<b>": r"**",      # <b> → **
+            r"</b>": r"**",     # </b> → **
+            r"<u>": r"",        # <u> (unsupported in Markdown) → removed
+            r"</u>": r""        # </u> (unsupported in Markdown) → removed
+        }
+
+        # Perform replacements
+        for html_tag, markdown_equiv in replacements.items():
+            text = re.sub(html_tag, markdown_equiv, text)
+
+        return text
+
+
+
+class RtfFormatter(OutputFormatter):
+    def format_author(self, author, *args, **kwargs):
+        formatted_author = author._format(*args, **kwargs)
+        return f"{formatted_author}"
+
+    def format_authors(self, author_list, *args, **kwargs):
+        return author_list._format(*args, **kwargs)
+
+    def format_final_entry(self, text, *args, **kwargs):
+        """
+        Replaces specific HTML-style formatting tags with RTF equivalents.
+        Ensures proper escaping of backslashes.
+        """
+        replacements = {
+            r"<i>": r"\\i ",      # Start italic (escaped backslash)
+            r"</i>": r"\\i0 ",    # End italic
+            r"<b>": r"\\b ",      # Start bold
+            r"</b>": r"\\b0 ",    # End bold
+            r"<u>": r"\\ul ",     # Start underline
+            r"</u>": r"\\ul0 "    # End underline
+        }
+
+        # Apply replacements
+        for html_tag, rtf_equiv in replacements.items():
+            text = re.sub(html_tag, rtf_equiv, text)  # Proper escaping fixes error
+
+        return r"{\rtf1\ansi " + text + "}"
 
 class OutputFormatterFactory:
     _formatters = {}
@@ -103,4 +217,6 @@ OutputFormatterFactory.register_formatter("latex", LatexFormatter)
 OutputFormatterFactory.register_formatter("LaTeX", LatexFormatter)
 OutputFormatterFactory.register_formatter("markdown", MarkdownFormatter)
 OutputFormatterFactory.register_formatter("Markdown", MarkdownFormatter)
+OutputFormatterFactory.register_formatter("richtext", RtfFormatter)
+OutputFormatterFactory.register_formatter("RichText", RtfFormatter)
 OutputFormatterFactory.register_formatter("--format--", None)
