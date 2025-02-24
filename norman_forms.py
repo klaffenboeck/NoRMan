@@ -267,7 +267,7 @@ class HierarchyWindow(tk.Toplevel):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         window_width = 840
-        window_height = 880
+        window_height = 920
         counter_offset = (main_app.total_descendant_count * 20) % 400
         x_offset = (screen_width - window_width + counter_offset) // 2
         y_offset = (screen_height - window_height + counter_offset) // 2
@@ -597,6 +597,24 @@ class HierarchyWindow(tk.Toplevel):
         # Add a button to open the PDF file
         self.open_pdf_button = ttk.Button(self.form_frame, text="Open", command=self.open_pdf)
         self.open_pdf_button.grid(row=90, column=7, padx=5, pady=5, sticky="W")
+        self.pdf2_label = ttk.Label(self.form_frame, text="PDF:")
+        self.pdf2_label.grid(row=91, column=0,  padx=5, pady=5, sticky="E")
+
+        self.pdf2_var = tk.StringVar()
+        self.pdf2_entry = ttk.Entry(self.form_frame, textvariable=self.pdf_var, width=38, state="readonly")
+        self.pdf2_entry.grid(row=91, column=1, columnspan=3, padx=5, pady=5, sticky="W")
+
+        # Add a button to select a PDF file
+        self.pdf2_button = ttk.Button(self.form_frame, text="Select", command=self.select_pdf_file)
+        self.pdf2_button.grid(row=91, column=5, padx=5, pady=5, sticky="W")
+
+        # Add a button to rename and move the PDF file
+        self.rename_move2_button = ttk.Button(self.form_frame, text="Move", command=self.rename_and_move_pdf)
+        self.rename_move2_button.grid(row=91, column=6, padx=5, pady=5, sticky="W")
+
+        # Add a button to open the PDF file
+        self.open_pdf2_button = ttk.Button(self.form_frame, text="Open", command=self.open_pdf)
+        self.open_pdf2_button.grid(row=91, column=7, padx=5, pady=5, sticky="W")
 
         # Add a button to save the form input
         # self.save_button = ttk.Button(self.form_frame, text="Save", command=self.save_form)
@@ -774,13 +792,13 @@ class HierarchyWindow(tk.Toplevel):
         self.year_var.set(self.value_or_default(page.year, ""))
         self.count_var.set(self.value_or_default(page.count, ""))# if page.count else self.count_var.set("0")
         self.pdf_var.set(self.pdf_handler.find_paper_path(page.key))
-        self.link_doi_var.set(page.link_doi)
+        self.link_doi_var.set(page.reference.link_doi)
         self.papertrail_var.set(page.papertrail)
         self.projects_var.set("; ".join(self.refman.project))
         self.project_combo.set("")
         if page.type:
             self.type_combo.set(page.type)
-        self.set_link_doi()
+        #self.set_link_doi()
         self.update_counters()
 
     def update_textfield(self, text_widget, text):

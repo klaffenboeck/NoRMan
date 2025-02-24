@@ -4,6 +4,7 @@ from config_handler import ConfigHandler
 from data_store_adapter import NotionAdapter
 from bibtex_handler import BibtexHandler
 from citation_printer import CitationPrinter
+import re
 
 class Reference:
     """Handles references by dynamically creating properties from a JSON config."""
@@ -63,6 +64,7 @@ class Reference:
     def __getattr__(self, name):
         """Custom getter to check loaded_reference before accessing local attributes."""
         # Avoid recursion by checking __dict__ directly
+        #breakpoint()
         if name == "loaded_reference":
             return self.__dict__.get("loaded_reference", None)
 
@@ -71,7 +73,31 @@ class Reference:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
         if self.loaded_reference and hasattr(self.loaded_reference, name):
-            return getattr(self.loaded_reference, name)
+            value = getattr(self.loaded_reference, name)
+            # HACK: special handling for link_doi necessary at the moment, has to be reviewed
+            if name != "link_doi" or value:  # Pass through only if NOT link_doi, or if link_doi is non-empty
+                return value
+
+        # Special handling for `link_doi`
+        if name in ["link_doi", "_link_doi"]:
+            #breakpoint()
+            # Try to return the stored value if already set
+            value = self.__dict__.get(f"_{name}", None)
+            if value:
+                return value
+
+            # Fallback to url if available
+            link_value = self.__dict__.get("_url", None)
+            if link_value:
+                return link_value
+
+            # Fallback to DOI if available
+            doi_value = self.__dict__.get("_doi", None)
+            if doi_value:
+                # Check if DOI needs formatting
+                if not re.match(r"(?:https?://doi\.org/|^/)(.+)", doi_value):
+                    return f"https://doi.org/{doi_value}"
+                return doi_value
 
         if name in self.__dict__["fields"]:  # Access fields directly from __dict__
             value = self.__dict__.get(f"_{name}", None)
