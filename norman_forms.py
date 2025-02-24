@@ -408,32 +408,6 @@ class HierarchyWindow(tk.Toplevel):
         self.cite_ref1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref1", self.cite_ref1_combo.get()))
         self.cite_ref2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref2", self.cite_ref2_combo.get()))
 
-
-        # self.citation_style_options = self.main_app.journal_style_options
-        # self.cite_style1_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
-        # self.cite_style1_combo.grid(row=23, column=5, pady=5, padx=(30,5), sticky="W")
-        # self.cite_style1_combo.set("--style--")
-        # self.cite_style2_combo = ttk.Combobox(self.form_frame, values=self.citation_style_options, width=7)
-        # self.cite_style2_combo.grid(row=24, column=5, pady=5, padx=(30,5), sticky="W")
-        # self.cite_style2_combo.set("--style--")
-
-
-        # self.cite_format_options = ["--format--","Plain","HTML", "LaTeX", "Html+CSS", "Markdown", "RichText"]
-        # self.cite_format1_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
-        # self.cite_format1_combo.grid(row=23, column=6, pady=5, padx=5, sticky="W")
-        # self.cite_format1_combo.set("--format--")
-        # self.cite_format2_combo = ttk.Combobox(self.form_frame, values=self.cite_format_options, width=7)
-        # self.cite_format2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
-        # self.cite_format2_combo.set("--format--")
-
-        # self.cite_ref_options = ["--refs--","\\cite","doi", "doi+cite","None"]
-        # self.cite_ref1_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
-        # self.cite_ref1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
-        # self.cite_ref1_combo.set("--refs--")
-        # self.cite_ref2_combo = ttk.Combobox(self.form_frame, values=self.cite_ref_options, width=7)
-        # self.cite_ref2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
-        # self.cite_ref2_combo.set("--refs--")
-
         # Add year label and entry
         self.year_label = ttk.Label(self.form_frame, text="Year:")
         self.year_label.grid(row=27, column=2, padx=5, pady=5, sticky="E")
@@ -451,6 +425,16 @@ class HierarchyWindow(tk.Toplevel):
         self.count_entry.grid(row=27, column=1, padx=5, pady=5, sticky="W")
         self.count_entry.bind("<KeyRelease>", lambda event: self.update_reference("count", str(self.count_var.get())))
 
+        self.refcite_label = tk.Label(self.form_frame, text="Copy reference:")
+        self.refcite_label.grid(row=27, column=6, padx=0, pady=(5,10), sticky="E")
+
+        self.refcite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.refcite1)
+        self.refcite1_button.configure(relief="flat")
+        self.refcite1_button.grid(row=27, column=7, padx=5, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.refcite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.refcite2)
+        self.refcite2_button.configure(relief="flat")
+        self.refcite2_button.grid(row=27, column=7, padx=(45,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
+
         # add title label and entry
         self.title_label = ttk.Label(self.form_frame, text="Title:")
         self.title_label.grid(row=30, column=0, padx=5, pady=5, sticky="E")
@@ -462,15 +446,8 @@ class HierarchyWindow(tk.Toplevel):
         self.copy_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.title))
         self.copy_title_btn.grid(row=30, column=5, padx=5, pady=0, sticky="W")
 
-        self.cite_title_btn = ttk.Button(self.form_frame, text="\\cite", command=self.cite_title)
-        self.cite_title_btn.grid(row=30, column=6, padx=5, pady=0, sticky="W")
-
-        self.refcite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.refcite1)
-        self.refcite1_button.configure(relief="flat")
-        self.refcite1_button.grid(row=30, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
-        self.refcite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.refcite2)
-        self.refcite2_button.configure(relief="flat")
-        self.refcite2_button.grid(row=30, column=7, padx=(40,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        # self.cite_title_btn = ttk.Button(self.form_frame, text="\\cite", command=self.cite_title)
+        # self.cite_title_btn.grid(row=30, column=6, padx=5, pady=0, sticky="W")
 
         self.short_title_label = ttk.Label(self.form_frame, text="Short title:")
         self.short_title_label.grid(row=31, column=0, padx=5, pady=5, sticky="E")
@@ -491,12 +468,25 @@ class HierarchyWindow(tk.Toplevel):
         self.copy_short_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.short_title_var.get()))
         self.copy_short_title_btn.grid(row=31, column=5, padx=5, pady=5, sticky="W")
 
+
+        self.footcite_label = tk.Label(self.form_frame, text="Copy footnote:")
+        self.footcite_label.grid(row=30, column=6, padx=0, pady=(5,10), sticky="E")
+
         self.footcite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.footcite1)
         self.footcite1_button.configure(relief="flat")
-        self.footcite1_button.grid(row=31, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.footcite1_button.grid(row=30, column=7, padx=5, pady=(5,10), ipadx=0, ipady=0, sticky="W")
         self.footcite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.footcite2)
         self.footcite2_button.configure(relief="flat")
-        self.footcite2_button.grid(row=31, column=7, padx=(40,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.footcite2_button.grid(row=30, column=7, padx=(45,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
+
+        self.incite_label = tk.Label(self.form_frame, text="Copy in-text:")
+        self.incite_label.grid(row=31, column=6, padx=0, pady=(5,10), sticky="E")
+        self.incite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.incite1)
+        self.incite1_button.configure(relief="flat")
+        self.incite1_button.grid(row=31, column=7, padx=5, pady=(5,10), ipadx=0, ipady=0, sticky="W")
+        self.incite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.incite2)
+        self.incite2_button.configure(relief="flat")
+        self.incite2_button.grid(row=31, column=7, padx=(45,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
 
         #small_default_font = tkFont.nametofont("TkDefaultFont")
         #small_default_font.configure(size=8)  # Change default size
@@ -515,12 +505,7 @@ class HierarchyWindow(tk.Toplevel):
         # self.authors_action_combo.set(self.authors_action_combo["values"][0])
         # #self.authors_action_combo.bind("<<ComboboxSelected>>", self.how_to_copy)
 
-        self.incite1_button = tk.Button(self.form_frame, text="#1", width=1, command=self.incite1)
-        self.incite1_button.configure(relief="flat")
-        self.incite1_button.grid(row=33, column=7, padx=0, pady=(5,10), ipadx=0, ipady=0, sticky="W")
-        self.incite2_button = tk.Button(self.form_frame, text="#2", width=1, command=self.incite2)
-        self.incite2_button.configure(relief="flat")
-        self.incite2_button.grid(row=33, column=7, padx=(40,0), pady=(5,10), ipadx=0, ipady=0, sticky="W")
+
 
         # add abstract label and textfield
         self.abstract_label = ttk.Label(self.form_frame, text="Abstract:")
