@@ -185,8 +185,15 @@ class ReferenceManager:
         """Creates a short title truncated after max_length characters with ellipses if needed."""
         return self.title if len(self.title) <= max_length else self.title[:max_length].rstrip() + "..."
 
+    # HACK: latex cite handling should be excluded eventually
     def cite(self, *args, **kwargs):
+        if "latex" in map(str.lower, args) and not kwargs:
+            return f"\\cite{{{self.key}}}"
         return self.citation_printer.cite(*args, **kwargs)
+
+    def keycite(self):
+        return self.cite("latex")
+
 
     def __getattr__(self, name):
         """Proxy attribute getting to the reference instance."""
