@@ -647,6 +647,13 @@ class HierarchyWindow(tk.Toplevel):
 
         self.bind_all("<KeyPress-Alt_L>", lambda event: self.switch_to_load())  # Windows/Linux Alt Key
         self.bind_all("<KeyRelease-Alt_L>", lambda event:  self.switch_to_validate())
+        self.bind_all("<Command-n>", lambda event: self.new_subwindow())  # macOS
+        self.bind_all("<Command-N>", lambda event: self.new_siblingwindow())  # macOS
+
+        # For Windows/Linux (Ctrl instead of Command)
+        self.bind_all("<Control-n>", lambda event: self.new_subwindow())
+        self.bind_all("<Control-N>", lambda event: self.new_siblingwindow())
+
         #self.bind("<KeyRelease-Alt_L>", lambda event: self.switch_to_validate)
 
         # # If you want Command (⌘) key on macOS:
