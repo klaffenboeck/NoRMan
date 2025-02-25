@@ -579,7 +579,7 @@ class HierarchyWindow(tk.Toplevel):
         self.separator_pdf.grid(row=89, column=0, columnspan=10, pady=10, sticky="ew")
 
         # Add a label and entry for "PDF"
-        self.pdf_label = ttk.Label(self.form_frame, text="PDF:")
+        self.pdf_label = ttk.Label(self.form_frame, text="Main PDF:")
         self.pdf_label.grid(row=90, column=0,  padx=5, pady=5, sticky="E")
 
         self.pdf_var = tk.StringVar()
@@ -597,23 +597,26 @@ class HierarchyWindow(tk.Toplevel):
         # Add a button to open the PDF file
         self.open_pdf_button = ttk.Button(self.form_frame, text="Open", command=self.open_pdf)
         self.open_pdf_button.grid(row=90, column=7, padx=5, pady=5, sticky="W")
-        self.pdf2_label = ttk.Label(self.form_frame, text="PDF:")
+
+
+        self.pdf2_label = ttk.Label(self.form_frame, text="Project PDF:")
         self.pdf2_label.grid(row=91, column=0,  padx=5, pady=5, sticky="E")
 
         self.pdf2_var = tk.StringVar()
-        self.pdf2_entry = ttk.Entry(self.form_frame, textvariable=self.pdf_var, width=38, state="readonly")
+        self.pdf2_entry = ttk.Entry(self.form_frame, textvariable=self.pdf2_var, width=38, state="readonly")
         self.pdf2_entry.grid(row=91, column=1, columnspan=3, padx=5, pady=5, sticky="W")
 
-        # Add a button to select a PDF file
-        self.pdf2_button = ttk.Button(self.form_frame, text="Select", command=self.select_pdf_file)
-        self.pdf2_button.grid(row=91, column=5, padx=5, pady=5, sticky="W")
+        self.pdf_project_combo = ttk.Combobox(self.form_frame, values=self.refman.project, width=7)
+        self.pdf_project_combo.grid(row=91, column=5, pady=5, padx=5, sticky="W")
+        self.pdf_project_combo.bind("<<ComboboxSelected>>", lambda event: self.update_ui())
+        #self.cite_ref1_combo.set(PreferenceHandler.get("cite_ref1", "--refs--"))
 
         # Add a button to rename and move the PDF file
-        self.rename_move2_button = ttk.Button(self.form_frame, text="Move", command=self.rename_and_move_pdf)
+        self.rename_move2_button = ttk.Button(self.form_frame, text="Duplicate", command=self.duplicate_main_pdf)
         self.rename_move2_button.grid(row=91, column=6, padx=5, pady=5, sticky="W")
 
         # Add a button to open the PDF file
-        self.open_pdf2_button = ttk.Button(self.form_frame, text="Open", command=self.open_pdf)
+        self.open_pdf2_button = ttk.Button(self.form_frame, text="Open", command=self.open_project_pdf)
         self.open_pdf2_button.grid(row=91, column=7, padx=5, pady=5, sticky="W")
 
         # Add a button to save the form input
@@ -792,10 +795,17 @@ class HierarchyWindow(tk.Toplevel):
         self.year_var.set(self.value_or_default(page.year, ""))
         self.count_var.set(self.value_or_default(page.count, ""))# if page.count else self.count_var.set("0")
         self.pdf_var.set(self.pdf_handler.find_paper_path(page.key))
+
+        self.pdf2_var.set(self.pdf_handler.find_paper_path(page.key, version=self.pdf_project_combo.get()))
         self.link_doi_var.set(page.reference.link_doi)
         self.papertrail_var.set(page.papertrail)
         self.projects_var.set("; ".join(self.refman.project))
         self.project_combo.set("")
+        self.pdf_project_combo['values'] = self.refman.project
+
+        if not self.pdf_project_combo.get():
+            last_project = self.refman.project[-1] if self.refman.project else ""
+            self.pdf_project_combo.set(last_project)
         if page.type:
             self.type_combo.set(page.type)
         #self.set_link_doi()
@@ -992,13 +1002,25 @@ class HierarchyWindow(tk.Toplevel):
         except (ValueError, FileNotFoundError, FileExistsError) as e:
             messagebox.showerror("Error", str(e))
 
-    def open_pdf(self):
+    def duplicate_main_pdf(self):
+        project = self.pdf_project_combo.get()
+        try:
+            project_pdf_path = self.pdf_handler.duplicate(project, append=f"_{project}")
+            self.pdf2_var.set(project_pdf_path)
+        except (ValueError, FileNotFoundError, FileExistsError) as e:
+            messagebox.showerror("Error", str(e))
+
+    def open_pdf(self, version=""):
         print("NEW METHOD IS CALLED FOR OPENING")
         """Handle UI interaction for opening the PDF."""
         try:
-            self.pdf_handler.open_pdf()
+            self.pdf_handler.open_pdf(version) if version else self.pdf_handler.open_pdf()
         except (FileNotFoundError, OSError) as e:
             messagebox.showerror("Error", str(e))
+
+    def open_project_pdf(self):
+        project = self.pdf_project_combo.get()
+        self.open_pdf(project)
 
     def clear_fields(self):
         self.refman = ReferenceManager()
