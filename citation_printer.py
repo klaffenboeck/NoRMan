@@ -75,9 +75,10 @@ class CitationPrinter:
         return template
 
     def process_citation(self, **kwargs):
-        print("CALLED PROCESS_CITATION")
         template_str = self.select_style_template(**kwargs)
         formatter = kwargs.get("formatter", "plain")
+        appendix = kwargs.get("appendix", "None")
+        citation_type = kwargs.get("type", "reference")
         self.output_formatter = OutputFormatterFactory.get_formatter(formatter)
 
         def replace_conditionals(text):
@@ -128,7 +129,10 @@ class CitationPrinter:
                 text += final_symbol
 
             if self.output_formatter:
-                return self.output_formatter.format_final_entry(text, id=self.reference.key)
+                final_text = self.output_formatter.format_final_entry(text, self.reference, appendix)
+                if appendix == "Link":
+                    final_text = self.output_formatter.append_link(final_text, self.reference, citation_type)
+                return final_text
             else:
                 return text
 
