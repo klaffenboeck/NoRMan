@@ -24,6 +24,7 @@ class MacClipboard(MultiClipboard):
 
     def copy(self, text: str, format_type: str = "plaintext"):
         if format_type == "plaintext":
+            # BUG: does not copy rft-links correctly
             process = subprocess.Popen("pbcopy", stdin=subprocess.PIPE)
             process.communicate(text.encode("utf-8"))
 
