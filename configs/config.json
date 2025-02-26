@@ -1,101 +1,148 @@
 {
-    "papers_path": "~/Documents/Papers/",
-    "project_options": [
-        "VISize",
-        "ModelPaper",
-        "RSVP",
-        "STAR",
-        "FastVega"
-    ],
-    "favorites": {
-        "citation_settings": {
-            "style1": "IEEE",
-            "italics1": "LaTeX",
-            "refs1": "cite"
-        }
+  "papers_path": "~/Documents/Papers/",
+  "project_options": [
+    "VISize",
+    "ModelPaper",
+    "RSVP",
+    "STAR",
+    "FastVega",
+    "VisREX"
+  ],
+  "favorites": {
+    "citation_settings": {
+      "style1": "IEEE",
+      "italics1": "LaTeX",
+      "refs1": "cite"
+    }
+  },
+  "type_options": [
+    "Paper",
+    "ShortPaper",
+    "Workshop",
+    "Abstract",
+    "Extended Abstract",
+    "Book",
+    "Dataset",
+    "Other",
+    ""
+  ],
+  "venue_options": [
+    "VIS",
+    "EuroVis",
+    "CHI",
+    "SIGGraph",
+    "TVCG",
+    "UISt",
+    "SIGMOD",
+    "PacificVis",
+    "Beliv",
+    "CGF",
+    "VLDB",
+    "arxiv",
+    ""
+  ],
+  "venue_mapping": [
+    {
+      "regex": "IEEE Transactions on Visualization and Computer Graphics",
+      "venue-mapping": "VIS"
     },
-    "type_options": [
-        "Paper",
-        "ShortPaper",
-        "Workshop",
-        "Abstract",
-        "Extended Abstract",
-        "Book",
-        "Dataset",
-        "Other",
-        ""
-    ],
-    "venue_options": [
-        "VIS",
-        "EuroVis",
-        "CHI",
-        "SIGGraph",
-        "TVCG",
-        "UISt",
-        "SIGMOD",
-        "PacificVis",
-        "Beliv",
-        "CGF",
-        "VLDB",
-        "arxiv",
-        ""
-    ],
-    "venue_mapping": [
-        {
-            "regex": "IEEE Transactions on Visualization and Computer Graphics",
-            "venue-mapping": "VIS"
-        },
-        {
-            "regex": "Beyond Time and Errors",
-            "venue-mapping": "Beliv"
-        },
-        {
-            "regex": "CHI Conference",
-            "venue-mapping": "CHI"
-        }
-    ],
-    "favorite_authors_mapping": [
-        {
-            "regex": "Jeffrey Heer",
-            "mapping": "Heer"
-        },
-        {
-            "regex": "Dominik Moritz",
-            "mapping": "Moritz"
-        },
-        {
-            "regex": "Min Chen",
-            "mapping": "ChenM"
-        }
-    ],
-    "special_surnames": [
-        "Chen",
-        "Fu",
-        "He",
-        "Hu",
-        "Kim",
-        "Liu",
-        "Li",
-        "Lee",
-        "Ma",
-        "Qin",
-        "Qu",
-        "Sah",
-        "Shen",
-        "Su",
-        "Suh",
-        "Wang",
-        "Wong",
-        "Xi",
-        "Xie",
-        "Xu",
-        "Yang",
-        "Ye",
-        "Yeung",
-        "Zhao",
-        "Zeng",
-        "Zhang",
-        "Zhou",
-        "Zhu"
-    ]
+    {
+      "regex": "Information Visualization",
+      "venue-mapping": "SAGE"
+    },
+    {
+      "regex": "Beyond Time and Errors",
+      "venue-mapping": "Beliv"
+    },
+    {
+      "regex": "CHI Conference",
+      "venue-mapping": "CHI"
+    }
+  ],
+  "favorite_authors_mapping": [
+    {
+      "regex": "Jeffrey Heer",
+      "mapping": "Heer"
+    },
+    {
+      "regex": "Dominik Moritz",
+      "mapping": "Moritz"
+    },
+    {
+      "regex": "Min Chen",
+      "mapping": "ChenM"
+    }
+  ],
+  "special_surnames": [
+    "Chen",
+    "Fu",
+    "He",
+    "Hu",
+    "Kim",
+    "Liu",
+    "Li",
+    "Lee",
+    "Ma",
+    "Qin",
+    "Qu",
+    "Sah",
+    "Shen",
+    "Su",
+    "Suh",
+    "Wang",
+    "Wong",
+    "Xi",
+    "Xie",
+    "Xu",
+    "Yang",
+    "Ye",
+    "Yeung",
+    "Zhao",
+    "Zeng",
+    "Zhang",
+    "Zhou",
+    "Zhu"
+  ],
+  "keyboard_shortcuts": {
+    "switch_to_load": {
+      "target": "self",
+      "Windows/Linux": "<Alt_L>",
+      "macOS": "<KeyPress-Option_L>"
+    },
+    "switch_to_validate": {
+      "target": "self",
+      "Windows/Linux": "<Alt_L Release>",
+      "macOS": "<KeyRelease-Option_L>"
+    },
+    "new_subwindow": {
+      "target": "self",
+      "Windows/Linux": "<Control-n>",
+      "macOS": "<Command-n>"
+    },
+    "new_siblingwindow": {
+      "target": "self",
+      "Windows/Linux": "<Control-N>",
+      "macOS": "<Command-N>"
+    },
+    "load_reference": {
+      "target": "refman",
+      "Windows/Linux": "<Control-l>",
+      "macOS": "<Command-l>"
+    },
+    "save_reference": {
+      "target": "refman",
+      "Windows/Linux": "<Control-s>",
+      "macOS": "<Command-s>"
+    },
+    "remove_selected_key": {
+      "target": "self",
+      "Windows/Linux": "<Control-U>",
+      "macOS": "<Command-U>"
+    },
+    "validate_key": {
+      "target": "self",
+      "Windows/Linus": "<Control-V>",
+      "macOS": "<Command-V>"
+    }
+  }
 }

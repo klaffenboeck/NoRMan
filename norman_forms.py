@@ -87,6 +87,7 @@ class MainApp(tk.Tk):
         self.venue_options = self.config_data["venue_options"]
         self.favorites = self.config_data["favorites"]
         self.favorite_citation_settings = self.favorites["citation_settings"]
+        self.keyboard_shortcuts = self.config_data["keyboard_shortcuts"]
         self.clipboard = ClipboardFactory.get_clipboard()
 
         self.reload_config()
@@ -131,6 +132,7 @@ class MainApp(tk.Tk):
         #print(f"self.formatting_styles type: {type(self.formatting_styles)}")
         self.journal_style_options = list(self.formatting_styles["journal_formatting_styles"].keys())
         self.journal_style_options.insert(0, "--style--")
+        self.keyboard_shortcuts = self.config_data["keyboard_shortcuts"]
 
     def open_config_editor(self):
         """Opens the ConfigEditor as a subwindow."""
@@ -670,24 +672,49 @@ class HierarchyWindow(tk.Toplevel):
         # self.bind("<KeyPress-Option_L>", lambda event: self.switch_to_load)  # macOS Option Key
         # self.bind("<KeyRelease-Option_L>", lambda event: self.switch_to_validate)
 
-        self.bind_all("<KeyPress-Alt_L>", lambda event: self.switch_to_load())  # Windows/Linux Alt Key
-        self.bind_all("<KeyRelease-Alt_L>", lambda event:  self.switch_to_validate())
-        self.bind_all("<Command-n>", lambda event: self.new_subwindow())  # macOS
-        self.bind_all("<Command-N>", lambda event: self.new_siblingwindow())  # macOS
-        self.bind_all("<Command-l>", lambda event: self.load_reference())  # macOS
-        self.bind_all("<Command-s>", lambda event: self.save_reference())  # macOS
+        # self.bind_all("<KeyPress-Alt_L>", lambda event: self.switch_to_load())  # Windows/Linux Alt Key
+        # self.bind_all("<KeyRelease-Alt_L>", lambda event:  self.switch_to_validate())
+        # self.bind_all("<Command-n>", lambda event: self.new_subwindow())  # macOS
+        # self.bind_all("<Command-N>", lambda event: self.new_siblingwindow())  # macOS
+        # self.bind_all("<Command-l>", lambda event: self.load_reference())  # macOS
+        # self.bind_all("<Command-s>", lambda event: self.save_reference())  # macOS
 
-        # For Windows/Linux (Ctrl instead of Command)
-        self.bind_all("<Control-n>", lambda event: self.new_subwindow())
-        self.bind_all("<Control-N>", lambda event: self.new_siblingwindow())
-        self.bind_all("<Control-l>", lambda event: self.load_reference())
-        self.bind_all("<Control-s>", lambda event: self.save_reference())
+        # # For Windows/Linux (Ctrl instead of Command)
+        # self.bind_all("<Control-n>", lambda event: self.new_subwindow())
+        # self.bind_all("<Control-N>", lambda event: self.new_siblingwindow())
+        # self.bind_all("<Control-l>", lambda event: self.load_reference())
+        # self.bind_all("<Control-s>", lambda event: self.save_reference())
 
-        # macOS: Bind Command+U to remove key
-        self.bind_all("<Command-U>", lambda event: self.remove_selected_key())
+        # # macOS: Bind Command+U to remove key
+        # self.bind_all("<Command-U>", lambda event: self.remove_selected_key())
 
-        # Windows/Linux: Bind Control+U to remove key
-        self.bind_all("<Control-U>", lambda event: self.remove_selected_key())
+        # # Windows/Linux: Bind Control+U to remove key
+        # self.bind_all("<Control-U>", lambda event: self.remove_selected_key())
+        #
+        keyboard_shortcuts = self.main_app.keyboard_shortcuts  # Retrieve shortcuts from MainApp
+
+        for action, bindings in keyboard_shortcuts.items():
+            target = bindings.pop("target", "self")  # Default to "self" if no target is specified
+
+            for platform, shortcut in bindings.items():
+                if (platform == "Windows/Linux" and not sys.platform.startswith("darwin")) or \
+                (platform == "macOS" and sys.platform.startswith("darwin")):
+
+                    target_obj = self if target == "self" else self.refman  # Default to self, unless target is "refman"
+
+                    if not shortcut:  # Skip if shortcut is missing
+                        continue
+
+                    print(f"Binding {shortcut} to {action} on {target_obj}")  # Debugging output
+
+                    try:
+                        if "Option_L" in shortcut and sys.platform.startswith("darwin"):
+                            self.bind(shortcut, lambda event, action=action, target_obj=target_obj: getattr(target_obj, action)())
+                        else:
+                            self.bind_all(shortcut, lambda event, action=action, target_obj=target_obj: getattr(target_obj, action)())
+                    except tk.TclError as e:
+                        print(f"Skipping invalid shortcut {shortcut}: {e}")
+
 
 
         #self.bind("<KeyRelease-Alt_L>", lambda event: self.switch_to_validate)
