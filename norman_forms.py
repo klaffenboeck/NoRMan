@@ -17,6 +17,7 @@ from citation_manager import CitationManager
 from reference_manager import ReferenceManager
 from multi_clipboard import ClipboardFactory
 from preference_handler import PreferenceHandler
+from key_handler import KeyHandler, AutocompleteCombobox
 
 
 # Define the main application class
@@ -257,6 +258,7 @@ class HierarchyWindow(tk.Toplevel):
         self.cm = CitationManager(main_app.config_path)
         self.refman = ReferenceManager()
         self.inherit_projects()
+        self.key_handler = KeyHandler()
 
         # Bind the destroy event to your custom close logic
         self.protocol("WM_DELETE_WINDOW", self.close_window)
@@ -281,15 +283,7 @@ class HierarchyWindow(tk.Toplevel):
         self.project_label = ttk.Label(self.form_frame, text="Project(s):")
         self.project_label.grid(row=1, column=0, padx=5, pady=5, sticky="E")
         self.project_combo = ttk.Combobox(self.form_frame, values=self.main_app.project_options, width=26)
-        #self.project_listbox = tk.Listbox(self.form_frame, selectmode=tk.MULTIPLE, height=1)
-        # if isinstance(parent,HierarchyWindow):
-        #     value = parent.project_combo.get()
-        #     if value not in self.main_app.project_options:
-        #         main_app.add_project_option(value)
-        #         self.project_combo = ttk.Combobox(self.form_frame, values=self.main_app.project_options)
-        #     self.project_combo.set(value)
-        #self.project_combo.set("VISize")
-        #self.populate_project_listbox()
+
         self.project_combo.grid(row=1, column=1, columnspan=3, padx=5, pady=5, sticky="W")
         self.project_combo.bind("<<ComboboxSelected>>", lambda event: [self.update_reference("project",self.project_combo.get())])
 
@@ -319,10 +313,12 @@ class HierarchyWindow(tk.Toplevel):
         self.key_label = ttk.Label(self.form_frame, text="Key:")
         self.key_label.grid(row=5, column=0, columnspan=1, padx=5, pady=5, sticky="E")
         self.key_var = tk.StringVar()
-        self.key_entry = ttk.Entry(self.form_frame, textvariable=self.key_var, width=23)
+        #self.key_entry = ttk.Entry(self.form_frame, textvariable=self.key_var, width=23)
+        self.key_entry = AutocompleteCombobox(self.form_frame, self.key_handler, textvariable=self.key_var, width=23)
         self.key_entry.grid(row=5, column=1, columnspan=3, padx=5, pady=5, sticky="W")
         #self.key_entry.bind("<KeyRelease>", lambda event: self.update_tree())
-        self.key_entry.bind("<KeyRelease>", lambda event: [self.update_reference("key",self.key_entry.get()), self.update_tree()])
+        self.key_entry.bind("<KeyRelease>", lambda event: [self.update_reference("key",self.key_entry.get()), self.update_tree(), self.key_entry._on_keyrelease(event)])
+        self.key_entry.bind("<<ComboboxSelected>>", lambda event: [self.update_reference("key",self.key_entry.get()), self.load_reference()])
 
         self.validate_key_btn = ttk.Button(self.form_frame, text="Validate", command=self.validate_key, width=7)
         self.validate_key_btn.grid(row=5, column=5, padx=5, pady=5, sticky="W")
@@ -356,14 +352,14 @@ class HierarchyWindow(tk.Toplevel):
         self.copy_bibtex_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.bibtex), width=5)
         self.copy_bibtex_btn.grid(row=20, column=7, padx=5, pady=0, sticky="N")
 
-        self.bibtex_radio_options = tk.StringVar(value="original")
-        self.bibtex_radio_btn1 = tk.Radiobutton(self.form_frame, text="original", variable=self.bibtex_radio_options, value="original", command=self.format_bibtex)
-        self.bibtex_radio_btn2 = tk.Radiobutton(self.form_frame, text="reformatted", variable=self.bibtex_radio_options, value="reformatted", command=self.format_bibtex)
-        self.bibtex_radio_btn3 = tk.Radiobutton(self.form_frame, text="reduced", variable=self.bibtex_radio_options, value="reduced", command=self.format_bibtex)
+        # self.bibtex_radio_options = tk.StringVar(value="original")
+        # self.bibtex_radio_btn1 = tk.Radiobutton(self.form_frame, text="original", variable=self.bibtex_radio_options, value="original", command=self.format_bibtex)
+        # self.bibtex_radio_btn2 = tk.Radiobutton(self.form_frame, text="reformatted", variable=self.bibtex_radio_options, value="reformatted", command=self.format_bibtex)
+        # self.bibtex_radio_btn3 = tk.Radiobutton(self.form_frame, text="reduced", variable=self.bibtex_radio_options, value="reduced", command=self.format_bibtex)
 
-        self.bibtex_radio_btn1.grid(row=21, column=5, padx=5, pady=5, sticky="w")
-        self.bibtex_radio_btn2.grid(row=21, column=6, padx=5, pady=5, sticky="w")
-        self.bibtex_radio_btn3.grid(row=21, column=7, padx=5, pady=5, sticky="w")
+        # self.bibtex_radio_btn1.grid(row=21, column=5, padx=5, pady=5, sticky="w")
+        # self.bibtex_radio_btn2.grid(row=21, column=6, padx=5, pady=5, sticky="w")
+        # self.bibtex_radio_btn3.grid(row=21, column=7, padx=5, pady=5, sticky="w")
 
         self.citation_settings_label = ttk.Label(self.form_frame, text="Citation settings")
         self.citation_settings_label.grid(row=22, column=5, padx=5, pady=5, sticky="W")
@@ -395,21 +391,21 @@ class HierarchyWindow(tk.Toplevel):
         self.cite_format2_combo.grid(row=24, column=6, pady=5, padx=5, sticky="W")
         self.cite_format2_combo.set(PreferenceHandler.get("cite_format2", "--format--"))
 
-        self.cite_ref1_combo = ttk.Combobox(self.form_frame, values=["--refs--", "\\cite", "doi", "doi+cite", "None"], width=7)
-        self.cite_ref1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
-        self.cite_ref1_combo.set(PreferenceHandler.get("cite_ref1", "--refs--"))
+        self.cite_appendix1_combo = ttk.Combobox(self.form_frame, values=["-append-", "Link", "None"], width=7)
+        self.cite_appendix1_combo.grid(row=23, column=7, pady=5, padx=5, sticky="W")
+        self.cite_appendix1_combo.set(PreferenceHandler.get("cite_ref1", "-append-"))
 
-        self.cite_ref2_combo = ttk.Combobox(self.form_frame, values=["--refs--", "\\cite", "doi", "doi+cite", "None"], width=7)
-        self.cite_ref2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
-        self.cite_ref2_combo.set(PreferenceHandler.get("cite_ref2", "--refs--"))
+        self.cite_appendix2_combo = ttk.Combobox(self.form_frame, values=["-append-", "Link", "None"], width=7)
+        self.cite_appendix2_combo.grid(row=24, column=7, pady=5, padx=5, sticky="W")
+        self.cite_appendix2_combo.set(PreferenceHandler.get("cite_ref2", "-append-"))
 
         # Bind the Combobox selection events to save preferences
         self.cite_style1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_style1", self.cite_style1_combo.get()))
         self.cite_style2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_style2", self.cite_style2_combo.get()))
         self.cite_format1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_format1", self.cite_format1_combo.get()))
         self.cite_format2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_format2", self.cite_format2_combo.get()))
-        self.cite_ref1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref1", self.cite_ref1_combo.get()))
-        self.cite_ref2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref2", self.cite_ref2_combo.get()))
+        self.cite_appendix1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref1", self.cite_appendix1_combo.get()))
+        self.cite_appendix2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref2", self.cite_appendix2_combo.get()))
 
         # Add year label and entry
         self.year_label = ttk.Label(self.form_frame, text="Year:")
@@ -464,9 +460,11 @@ class HierarchyWindow(tk.Toplevel):
         self.short_title_manual_checkbox.grid(row=31, column=3, padx=5, pady=5, sticky="E")
 
         self.short_title_length_var = tk.StringVar()
-        self.short_title_length_options = list(map(str, list(range(1,9))))
+        self.short_title_length_options = list(map(str, list(range(25,51))))
         self.short_title_length_combo = ttk.Combobox(self.form_frame, values=self.short_title_length_options, width=3)
         self.short_title_length_combo.grid(row=31, column=3, padx=5, pady=5, sticky="W")
+        self.short_title_length_combo.bind("<<ComboboxSelected>>", lambda event: [self.generate_short_title()])
+        self.short_title_length_combo.bind("<Return>", lambda event: self.generate_short_title())
 
         self.copy_short_title_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.short_title_var.get()))
         self.copy_short_title_btn.grid(row=31, column=5, padx=5, pady=5, sticky="W")
@@ -520,6 +518,9 @@ class HierarchyWindow(tk.Toplevel):
         self.abstract_chars_label.grid(row=40, column=0, padx=8, pady=8, sticky="SE")
         self.abstract_field.bind("<KeyRelease>", lambda event: [self.update_reference("abstract",self.get_fieldtext(self.abstract_field))])
 
+        self.copy_abstract_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.abstract))
+        self.copy_abstract_btn.grid(row=40, column=5, padx=5, pady=0, sticky="W")
+
         # add journal label and entry
         self.journal_label = ttk.Label(self.form_frame, text="Journal:")
         self.journal_label.grid(row=50, column=0, padx=5, pady=5, sticky="E")
@@ -568,10 +569,13 @@ class HierarchyWindow(tk.Toplevel):
         self.notes_chars_label.grid(row=80, column=0, padx=8, pady=8, sticky="SE")
         self.notes_field.bind("<KeyRelease>", lambda event: [self.update_reference("notes",self.gf(self.notes_field))])
 
+        self.copy_notes_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.notes))
+        self.copy_notes_btn.grid(row=80, column=5, padx=5, pady=0, sticky="W")
+
         send_button_style = ttk.Style()
         send_button_style.configure("Custom.TButton", background="white", bordercolor="red", borderwidth=2)
 
-        self.send_button = ttk.Button(self.form_frame, text="Send to Notion", command=self.refman.save_reference, style="Custom.TButton",  width=15)
+        self.send_button = ttk.Button(self.form_frame, text="Send to Notion", command=self.save_reference, style="Custom.TButton",  width=15)
         self.send_button.grid(row=80, column=6, columnspan=2, padx=5, pady=5, sticky="SW")
 
         # Add a horizontal separator
@@ -671,13 +675,20 @@ class HierarchyWindow(tk.Toplevel):
         self.bind_all("<Command-n>", lambda event: self.new_subwindow())  # macOS
         self.bind_all("<Command-N>", lambda event: self.new_siblingwindow())  # macOS
         self.bind_all("<Command-l>", lambda event: self.load_reference())  # macOS
-        self.bind_all("<Command-s>", lambda event: self.refman.save_reference())  # macOS
+        self.bind_all("<Command-s>", lambda event: self.save_reference())  # macOS
 
         # For Windows/Linux (Ctrl instead of Command)
         self.bind_all("<Control-n>", lambda event: self.new_subwindow())
         self.bind_all("<Control-N>", lambda event: self.new_siblingwindow())
         self.bind_all("<Control-l>", lambda event: self.load_reference())
-        self.bind_all("<Control-s>", lambda event: self.refman.save_reference())
+        self.bind_all("<Control-s>", lambda event: self.save_reference())
+
+        # macOS: Bind Command+U to remove key
+        self.bind_all("<Command-U>", lambda event: self.remove_selected_key())
+
+        # Windows/Linux: Bind Control+U to remove key
+        self.bind_all("<Control-U>", lambda event: self.remove_selected_key())
+
 
         #self.bind("<KeyRelease-Alt_L>", lambda event: self.switch_to_validate)
 
@@ -726,14 +737,14 @@ class HierarchyWindow(tk.Toplevel):
     def cite1(self, type):
         style = self.cite_style1_combo.get()
         format = self.cite_format1_combo.get()
-        ref = self.cite_ref1_combo.get()
-        self.cc(self.refman.cite(style=style, formatter=format, type=type))
+        append = self.cite_appendix1_combo.get()
+        self.cc(self.refman.cite(style=style, formatter=format, type=type, appendix=append))
 
     def cite2(self, type):
         style = self.cite_style2_combo.get()
         format = self.cite_format2_combo.get()
-        ref = self.cite_ref2_combo.get()
-        self.cc(self.refman.cite(style=style, formatter=format, type=type))
+        append = self.cite_appendix2_combo.get()
+        self.cc(self.refman.cite(style=style, formatter=format, type=type, appendix=append))
 
     def inherit_projects(self):
         if isinstance(self.parent,HierarchyWindow):
@@ -776,6 +787,16 @@ class HierarchyWindow(tk.Toplevel):
 
     def load_reference(self):
         self.refman.load_reference()
+        self.cache_key()
+        self.update_ui()
+
+    def save_reference(self):
+        self.refman.save_reference()
+
+    def generate_short_title(self):
+        length = int(self.short_title_length_combo.get())
+        self.refman.short_title = self.refman.create_short_title(length)
+        self.refman.short_title_manual = False
         self.update_ui()
 
     def update_ui(self):
@@ -790,13 +811,19 @@ class HierarchyWindow(tk.Toplevel):
         if page.authors:
             self.authors = page.authors.to_string(" and ")
             self.authors_var.set(self.authors)
+        else:
+            self.authors_var.set("")
         self.journal_var.set(page.journal)
         self.venue_combo.set(page.venue)
         self.year_var.set(self.value_or_default(page.year, ""))
         self.count_var.set(self.value_or_default(page.count, ""))# if page.count else self.count_var.set("0")
         self.pdf_var.set(self.pdf_handler.find_paper_path(page.key))
 
-        self.pdf2_var.set(self.pdf_handler.find_paper_path(page.key, version=self.pdf_project_combo.get()))
+        project_pdf = self.pdf_project_combo.get() if self.pdf_project_combo.get() else ""
+        if project_pdf:
+            self.pdf2_var.set(self.pdf_handler.find_paper_path(page.key, version=project_pdf))
+        else:
+            self.pdf2_var.set("")
         self.link_doi_var.set(page.reference.link_doi)
         self.papertrail_var.set(page.papertrail)
         self.projects_var.set("; ".join(self.refman.project))
@@ -806,10 +833,19 @@ class HierarchyWindow(tk.Toplevel):
         if not self.pdf_project_combo.get():
             last_project = self.refman.project[-1] if self.refman.project else ""
             self.pdf_project_combo.set(last_project)
+        if not self.refman.project:
+            self.pdf_project_combo.set("")
+        if not self.refman.venue:
+            self.ui_based_venue_mapping()
         if page.type:
             self.type_combo.set(page.type)
         #self.set_link_doi()
         self.update_counters()
+
+    def ui_based_venue_mapping(self):
+        if not self.refman.venue:
+            self.refman.venue = self.match_venue()
+
 
     def update_textfield(self, text_widget, text):
         cursor_pos = text_widget.index(tk.INSERT)
@@ -917,17 +953,17 @@ class HierarchyWindow(tk.Toplevel):
     def match_venue(self):
         """Matches journal name against venue_mapping regex and sets the venue_combo value."""
         journal_name = self.journal_var.get()
-
         for mapping in self.main_app.config_data.get("venue_mapping", []):  # Ensure venue_mapping exists
             pattern = mapping.get("regex", "")
             venue = mapping.get("venue-mapping", "")
-
             if pattern and re.search(pattern, journal_name, re.IGNORECASE):  # Case-insensitive match
+
                 self.venue_combo.set(venue)
-                return  # Stop after the first match
+                return venue# Stop after the first match
 
         # If no match is found, clear or set a default
         self.venue_combo.set("")
+        return ""
 
     def validate_key(self):
         self.update_key_validation()
@@ -944,12 +980,32 @@ class HierarchyWindow(tk.Toplevel):
             self.is_waiting = False
             self.key_validation.set("is NOT available!!")
             self.key_validation_label.config(foreground="red")
+            self.cache_key()
 
     def check_key(self):
         title = self.key_entry.get()
         return self.main_app.notion_api.validate_key_availability(title)
         # LEFTOVER: loaded_from_notion in UI should not be necessary anymore.
         self.loaded_from_notion = True
+
+    def cache_key(self):
+        """Save the entered key to KeyHandler if it's new."""
+        key = self.key_entry.get().strip()
+        if key:
+            self.key_handler.add_key(key)  # Save key to JSON
+            self.key_entry["values"] = self.key_handler.get_keys()  # Refresh dropdown
+
+    def remove_selected_key(self):
+        """Remove the currently entered key from KeyHandler."""
+        key = self.key_entry.get().strip()
+        print(f"Attempting to remove key: '{key}'")  # Debugging statement
+        if key:
+            self.key_handler.remove_key(key)
+            print(f"Key list after removal: {self.key_handler.get_keys()}")  # Debugging statement
+            self.key_entry["values"] = self.key_handler.get_keys()  # Refresh dropdown
+            self.key_entry.set("")  # Clear input field
+
+
 
     def only_numbers(self, char):
         # Return True if the input is a digit or empty (to allow deleting).
