@@ -5,6 +5,7 @@ venv/
 
 # Ignore the actual Notion config file (contains sensitive data)
 configs/notion_config.json
+configs/key_store.json
 
 # Ignore preferences.json which will be auto-generated
 configs/preferences.json
