@@ -80,7 +80,7 @@ class PdfHandler:
         """
         #print(f"DEBUG: Searching for {key_content}.pdf in {version}")  # Debugging
 
-        if not version:
+        if not version or not key_content:
             return ""
 
         # ✅ Update search path for projects to `_Projects/{project_name}/`

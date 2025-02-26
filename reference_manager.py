@@ -209,7 +209,8 @@ class ReferenceManager:
 
     def create_short_title(self, max_length=30):
         """Creates a short title truncated after max_length characters with ellipses if needed."""
-        return self.title if len(self.title) <= max_length else self.title[:max_length].rstrip() + "..."
+        self.short_title_manual = False
+        return self.title if len(self.title) <= int(max_length) else self.title[:max_length].rstrip() + "..."
 
     # HACK: latex cite handling should be excluded eventually
     def cite(self, *args, **kwargs):
