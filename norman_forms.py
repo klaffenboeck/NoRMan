@@ -285,9 +285,8 @@ class HierarchyWindow(tk.Toplevel):
         self.project_label = ttk.Label(self.form_frame, text="Project(s):")
         self.project_label.grid(row=1, column=0, padx=5, pady=5, sticky="E")
         self.project_combo = ttk.Combobox(self.form_frame, values=self.main_app.project_options, width=26)
-
         self.project_combo.grid(row=1, column=1, columnspan=3, padx=5, pady=5, sticky="W")
-        self.project_combo.bind("<<ComboboxSelected>>", lambda event: [self.update_reference("project",self.project_combo.get())])
+
 
         self.projects_var = tk.StringVar()
         self.projects_label = ttk.Label(self.form_frame, font=("Arial", 10), textvariable=self.projects_var, background="white")
@@ -408,6 +407,7 @@ class HierarchyWindow(tk.Toplevel):
         self.cite_format2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_format2", self.cite_format2_combo.get()))
         self.cite_appendix1_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref1", self.cite_appendix1_combo.get()))
         self.cite_appendix2_combo.bind("<<ComboboxSelected>>", lambda event: PreferenceHandler.set("cite_ref2", self.cite_appendix2_combo.get()))
+        self.project_combo.bind("<<ComboboxSelected>>", lambda event: [PreferenceHandler.set("curr_project", self.project_combo.get()),self.update_reference("project",self.project_combo.get())])
 
         # Add year label and entry
         self.year_label = ttk.Label(self.form_frame, text="Year:")
@@ -614,8 +614,8 @@ class HierarchyWindow(tk.Toplevel):
 
         self.pdf_project_combo = ttk.Combobox(self.form_frame, values=self.refman.project, width=7)
         self.pdf_project_combo.grid(row=91, column=5, pady=5, padx=5, sticky="W")
-        self.pdf_project_combo.bind("<<ComboboxSelected>>", lambda event: self.update_ui())
-        #self.cite_ref1_combo.set(PreferenceHandler.get("cite_ref1", "--refs--"))
+        self.pdf_project_combo.bind("<<ComboboxSelected>>", lambda event: [PreferenceHandler.set("curr_project",self.pdf_project_combo.get()),self.update_ui()])
+
 
         # Add a button to rename and move the PDF file
         self.rename_move2_button = ttk.Button(self.form_frame, text="Duplicate", command=self.duplicate_main_pdf)
@@ -731,9 +731,10 @@ class HierarchyWindow(tk.Toplevel):
 
         # Add this window to the main app's window reference
         self.main_app.windows[self.name] = self
+        self.update_ui()
 
     def update_reference(self, key, value):
-        print(f"UPDATE_REFERENCE.{key} = {value}")
+        #print(f"UPDATE_REFERENCE.{key} = {value}")
         setattr(self.refman, key, value)
         self.update_ui()
 
@@ -856,12 +857,9 @@ class HierarchyWindow(tk.Toplevel):
         self.projects_var.set("; ".join(self.refman.project))
         self.project_combo.set("")
         self.pdf_project_combo['values'] = self.refman.project
+        self.confirm_project_preference()
 
-        if not self.pdf_project_combo.get():
-            last_project = self.refman.project[-1] if self.refman.project else ""
-            self.pdf_project_combo.set(last_project)
-        if not self.refman.project:
-            self.pdf_project_combo.set("")
+        self.pdf_project_combo.set(PreferenceHandler.get("curr_project",""))
         if not self.refman.venue:
             self.ui_based_venue_mapping()
         if page.type:
@@ -869,10 +867,16 @@ class HierarchyWindow(tk.Toplevel):
         #self.set_link_doi()
         self.update_counters()
 
+    def confirm_project_preference(self):
+        proj = PreferenceHandler.get("curr_project")
+        if proj in self.refman.project:
+            PreferenceHandler.set("curr_project", proj)
+        else:
+            PreferenceHandler.set("curr_project", "")
+
     def ui_based_venue_mapping(self):
         if not self.refman.venue:
             self.refman.venue = self.match_venue()
-
 
     def update_textfield(self, text_widget, text):
         cursor_pos = text_widget.index(tk.INSERT)
