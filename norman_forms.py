@@ -325,13 +325,25 @@ class HierarchyWindow(tk.Toplevel):
         self.validate_key_btn.grid(row=5, column=5, padx=5, pady=5, sticky="W")
         self.key_validation = tk.StringVar()
         self.key_validation_label = ttk.Label(self.form_frame, font=("Lucida Console", 8), textvariable=self.key_validation)
-        self.key_validation_label.grid(row=5, column=3, padx=5, pady=0, sticky="W")
+        self.key_validation_label.grid(row=5, column=3, padx=0, pady=0, sticky="W")
 
         self.copy_key_btn = ttk.Button(self.form_frame, text="Copy", command=lambda: self.cc(self.refman.key))
         self.copy_key_btn.grid(row=5, column=6, padx=5, pady=0, sticky="W")
 
         self.copy_keycite_btn = ttk.Button(self.form_frame, text="\\cite", command=lambda: self.cc(self.refman.keycite()))
         self.copy_keycite_btn.grid(row=5, column=7, padx=5, pady=0, sticky="W")
+
+        self.key_project_combo = ttk.Combobox(self.form_frame, values=self.refman.project, width=7)
+        self.key_project_combo.grid(row=6, column=5, pady=5, padx=5, sticky="W")
+        self.key_project_combo.bind("<<ComboboxSelected>>", lambda event: [PreferenceHandler.set("curr_project",self.key_project_combo.get()),self.update_ui(), self.copy_key_project()])
+
+        self.key_project_connector_combo = ttk.Combobox(self.form_frame, values=["_","-", " - "], justify="center", width=3)
+        self.key_project_connector_combo.grid(row=6, column=3, pady=5, padx=5, sticky="E")
+        self.key_project_connector_combo.set(PreferenceHandler.get("key_project_connector","_"))
+        self.key_project_connector_combo.bind("<<ComboboxSelected>>", lambda event: [PreferenceHandler.set("key_project_connector",self.key_project_connector_combo.get()), self.copy_key_project()])
+
+        self.copy_key_project_btn = ttk.Button(self.form_frame, text="Copy", command=self.copy_key_project)
+        self.copy_key_project_btn.grid(row=6, column=6, padx=5, pady=0, sticky="W")
 
         # add bibtex label and entry
         self.bibtex_label = ttk.Label(self.form_frame, text="Bibtex:")
@@ -857,9 +869,11 @@ class HierarchyWindow(tk.Toplevel):
         self.projects_var.set("; ".join(self.refman.project))
         self.project_combo.set("")
         self.pdf_project_combo['values'] = self.refman.project
+        self.key_project_combo['values'] = self.refman.project
         self.confirm_project_preference()
 
         self.pdf_project_combo.set(PreferenceHandler.get("curr_project",""))
+        self.key_project_combo.set(PreferenceHandler.get("curr_project",""))
         if not self.refman.venue:
             self.ui_based_venue_mapping()
         if page.type:
@@ -919,6 +933,15 @@ class HierarchyWindow(tk.Toplevel):
     def copy_title(self):
         value = self.title_var.get()
         self.main_app.copy_to_clipboard(value)
+
+    def copy_key_project(self):
+        key = self.refman.key
+        conn = self.key_project_connector_combo.get()
+        conn = conn if conn else ""
+        proj = PreferenceHandler.get("curr_project","")
+        val = (key+conn+proj)
+        self.cc(val)
+        return val
 
     def cite_title(self):
         value = self.title_var.get()
